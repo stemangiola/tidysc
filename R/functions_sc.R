@@ -178,9 +178,14 @@ create_seurat_from_tibble = function(input.df,
 
   # pass the sample column to the orig.ident column of meta data
   seurat_obj@meta.data$orig.ident =
-    input.df %>%
-    distinct(!!sample_column,!!cell_column) %>%
-    arrange(match(!!cell_column, rownames(seurat_obj@meta.data))) %>%
+    colnames(seurat_obj) %>%
+    as_tibble() %>%
+    rename(cell = value) %>%
+    left_join(
+      input.df %>%
+        distinct(!!sample_column,!!cell_column),
+      by = "cell"
+    )  %>%
     pull(!!sample_column) # seurat_obj@meta.data[[quo_name(sample_column)]]
 
   # Return
@@ -226,8 +231,45 @@ create_tt_from_tibble_sc = function(input.df,
   transcript_column = enquo(transcript_column)
   counts_column = enquo(counts_column)
 
+  convert_underscore_to_dash = function(input.df, transcript_column){
+
+    transcript_column = enquo(transcript_column)
+
+    wired_names =
+      input.df %>%
+      distinct(!!transcript_column) %>%
+      filter(grepl("_", !!transcript_column)) %>%
+      pull(!!transcript_column)
+
+    input.df %>%
+
+      # Check if wired names are present
+      ifelse_pipe(
+        wired_names %>% length %>% `>` (0),
+        ~ {
+          warning("Genes with possibly a strange name are present %s. Converting \"_\" to \"-\" ", paste(wired_names, collapse=", "))
+
+          bind_rows(
+
+            # Genes with normal names
+            .x %>%
+              filter(!(!!transcript_column %in% wired_names)),
+
+            # Genes with wired names converted
+            .x %>%
+              filter(!(!!transcript_column %in% wired_names)) %>%
+              mutate(!!transcript_column := gsub("_", "-", !!transcript_column))
+          )
+        }
+      )
+  }
+
   # Create seurat object
   input.df %>%
+
+    # Eliminate gene statistics from genes and convert genes with wired name
+    filter(!(!!transcript_column %in% c("no_feature", "too_low_aQual", "not_aligned", "alignment_not_unique"))) %>%
+    convert_underscore_to_dash(!!transcript_column) %>%
 
     # Check if any cell name starts with a number
     # If so put a _ before, save original name
@@ -636,27 +678,27 @@ add_doublet_classification_sc = function(input.df, doublet.reps) {
 
                    # Otherwise calculate
                    file_filtered %>%
-                   {
-                     if (!file.exists(file_filtered))
-                       system(
-                         command = paste(
-                           "gunzip -c",
-                           paste0(file_filtered, ".gz"),
-                           ">",
-                           file_filtered
-                         ),
-                         intern = FALSE
-                       )
-                     file_filtered %>% detect_doublets(file_doublets, doublet.reps) %>% setNames(barcodes) %>%
                      {
-                       # Delete before returning
-                       if (file.exists(paste0(file_filtered, ".gz")))
-                         system(command = paste("rm", file_filtered),
-                                intern = T)
-                       (.)
-                     }
+                       if (!file.exists(file_filtered))
+                         system(
+                           command = paste(
+                             "gunzip -c",
+                             paste0(file_filtered, ".gz"),
+                             ">",
+                             file_filtered
+                           ),
+                           intern = FALSE
+                         )
+                       file_filtered %>% detect_doublets(file_doublets, doublet.reps) %>% setNames(barcodes) %>%
+                         {
+                           # Delete before returning
+                           if (file.exists(paste0(file_filtered, ".gz")))
+                             system(command = paste("rm", file_filtered),
+                                    intern = T)
+                           (.)
+                         }
 
-                   }
+                     }
                  ) %>%
 
                  # Match to Seurat object
