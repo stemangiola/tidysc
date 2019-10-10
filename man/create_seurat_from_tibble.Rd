@@ -2,26 +2,25 @@
 % Please edit documentation in R/functions_sc.R
 \name{create_seurat_from_tibble}
 \alias{create_seurat_from_tibble}
-\title{Create tt object from tibble}
+\title{Create seurat object from tibble}
 \usage{
-create_seurat_from_tibble(input.df, sample_column, cell_column,
-  transcript_column, counts_column, min.transcripts = 400,
-  min.cells = 5, ...)
+create_seurat_from_tibble(input.df, .sample, .cell, .transcript,
+  .abundance, min.transcripts = 400, min.cells = 5, ...)
 }
 \arguments{
 \item{input.df}{A tibble}
 
-\item{sample_column}{A symbol for the sample column}
+\item{.sample}{A symbol for the sample column}
 
-\item{cell_column}{A symbol for the cell column}
+\item{.cell}{A symbol for the cell column}
 
-\item{transcript_column}{A symbol for the transcript name column}
+\item{.transcript}{A symbol for the transcript name column}
 
-\item{counts_column}{A symbol for read counts}
+\item{.abundance}{A symbol for read counts}
 }
 \value{
 A tt object
 }
 \description{
-Create tt object from tibble
+Create seurat object from tibble
 }

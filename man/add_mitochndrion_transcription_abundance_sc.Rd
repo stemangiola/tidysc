@@ -4,7 +4,7 @@
 \alias{add_mitochndrion_transcription_abundance_sc}
 \title{Add mitochondrion transcription abundance}
 \usage{
-add_mitochndrion_transcription_abundance_sc(input.df, cell_column)
+add_mitochndrion_transcription_abundance_sc(input.df, .cell)
 }
 \arguments{
 \item{input.df}{A tt object}

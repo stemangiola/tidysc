@@ -4,7 +4,7 @@
 \alias{update_object_sc}
 \title{Update seurat attribute based on cell content of the data tt frame}
 \usage{
-update_object_sc(input.df, cell_column = NULL)
+update_object_sc(input.df, .cell = NULL)
 }
 \arguments{
 \item{var}{A tt object}

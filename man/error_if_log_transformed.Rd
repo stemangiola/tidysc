@@ -4,7 +4,7 @@
 \alias{error_if_log_transformed}
 \title{Check whether a numeric vector has been log transformed}
 \usage{
-error_if_log_transformed(x, counts_column)
+error_if_log_transformed(x, .abundance)
 }
 \arguments{
 \item{x}{A numeric vector}

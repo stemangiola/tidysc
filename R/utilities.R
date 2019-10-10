@@ -98,11 +98,11 @@ as_matrix <- function(tbl,
 #' Check whether a numeric vector has been log transformed
 #'
 #' @param x A numeric vector
-error_if_log_transformed <- function(x, counts_column) {
-  counts_column = enquo(counts_column)
+error_if_log_transformed <- function(x, .abundance) {
+  .abundance = enquo(.abundance)
 
   if (x %>% nrow %>% `>` (0))
-    if (x %>% summarise(m = !!counts_column %>% max) %>% pull(m) < 50)
+    if (x %>% summarise(m = !!.abundance %>% max) %>% pull(m) < 50)
       stop(
         "The input was log transformed, this algorithm requires raw (un-normalised) read counts"
       )
@@ -116,22 +116,22 @@ error_if_log_transformed <- function(x, counts_column) {
 #'
 #'
 #' @param input.df A tibble of read counts
-#' @param sample_column A character name of the sample column
-#' @param transcript_column A character name of the gene/transcript name column
-#' @param counts_column A character name of the read count column
+#' @param .sample A character name of the sample column
+#' @param .transcript A character name of the gene/transcript name column
+#' @param .abundance A character name of the read count column
 error_if_duplicated_genes <- function(input.df,
-                                      sample_column = `sample`,
-                                      transcript_column = `transcript`,
-                                      counts_column = `read count`) {
-  sample_column = enquo(sample_column)
-  transcript_column = enquo(transcript_column)
-  counts_column = enquo(counts_column)
+                                      .sample = `sample`,
+                                      .transcript = `transcript`,
+                                      .abundance = `read count`) {
+  .sample = enquo(.sample)
+  .transcript = enquo(.transcript)
+  .abundance = enquo(.abundance)
 
   duplicates <-
     input.df %>%
-    select(!!sample_column,!!transcript_column,!!counts_column) %>%
+    select(!!.sample,!!.transcript,!!.abundance) %>%
     distinct() %>%
-    count(!!sample_column,!!transcript_column) %>%
+    count(!!.sample,!!.transcript) %>%
     filter(n > 1) %>%
     arrange(n %>% desc())
 
@@ -155,12 +155,12 @@ error_if_duplicated_genes <- function(input.df,
 #'
 #'
 #' @param input.df A tibble of read counts
-#' @param counts_column A character name of the read count column
-error_if_counts_is_na = function(input.df, counts_column) {
-  counts_column = enquo(counts_column)
+#' @param .abundance A character name of the read count column
+error_if_counts_is_na = function(input.df, .abundance) {
+  .abundance = enquo(.abundance)
 
   # Do the check
-  if (input.df %>% filter(!!counts_column %>% is.na) %>% nrow %>% `>` (0))
+  if (input.df %>% filter(!!.abundance %>% is.na) %>% nrow %>% `>` (0))
     stop("You have NA values in your counts")
 
   # If all good return original data frame
@@ -175,7 +175,7 @@ error_if_counts_is_na = function(input.df, counts_column) {
 #'
 #'
 #' @param input.df A tibble of read counts
-#' @param counts_column A character name of the read count column
+#' @param .abundance A character name of the read count column
 error_if_wrong_input = function(input.df, list_input, expected_type) {
 
 
@@ -243,6 +243,18 @@ scale_design = function(df, formula) {
 add_attr = function(var, attribute, name) {
   attr(var, name) <- attribute
   var
+}
+
+#' Remove class to abject
+#'
+#'
+#' @param var A tibble
+#' @param name A character name of the class
+#'
+#' @return A tibble with an additional attribute
+drop_class = function(var, name) {
+	class(var) <- class(var)[!class(var)%in%name]
+	var
 }
 
 #' From rlang deprecated
@@ -343,25 +355,26 @@ drop_assay = function(var, assay_name) {
 #' @param elements_column A character name of the sample column
 #'
 #' @return A list of column enquo or error
-get_cell = function(input.df, cell_column) {
+get_cell = function(input.df, .cell) {
   # If setted by the user, enquo those
-  if (cell_column %>% quo_is_symbol())
-    return(list(cell_column = cell_column))
+  if (.cell %>% quo_is_symbol())
+    return(list(.cell = .cell))
 
   # Otherwise check if attribute exists
   else {
     # If so, take them from the attribute
     if (input.df %>% attr("parameters") %>% is.null %>% `!`)
-      return(list(cell_column =   unlist(attr(
+      return(list(.cell =   unlist(attr(
         input.df, "parameters"
-      ))$cell_column))
+      ))$.cell))
 
     # Else through error
     else
       stop(
         "
-        The fucntion does not know what are your cell column (e.g., cell) are.\n
-        You have to either enter those as symbols (e.g., `cell`), \n
+        You might have altered the tt object and lost the attributes.
+        The fucntion does not know what are your cell column (e.g., cell) are.
+        You have to either enter those as symbols (e.g., `cell`),
         or use the funtion create_tt_from_tibble() to pass your column names that will be remembered.
         "
       )
@@ -380,11 +393,11 @@ get_cell = function(input.df, cell_column) {
 #' @param assay_name An character name of the assay
 #'
 #' @return A tt object
-update_object_sc = function(input.df, cell_column = NULL) {
+update_object_sc = function(input.df, .cell = NULL) {
   # Get column names
-  cell_column = enquo(cell_column)
-  col_names = get_cell(input.df, cell_column)
-  cell_column = col_names$cell_column
+  .cell = enquo(.cell)
+  col_names = get_cell(input.df, .cell)
+  .cell = col_names$.cell
 
   input.df %>%
     add_attr((.) %>%
@@ -392,15 +405,28 @@ update_object_sc = function(input.df, cell_column = NULL) {
                map(~ subset(
                  .x,
                  cells = input.df %>%
-                   #filter(sample == .x@project.name) %>%
-                   pull(!!cell_column) %>%
+                   pull(!!.cell) %>%
                    as.character()
                )),
              "seurat")
 }
 
+update_metadata_sc = function(input.df, .cell = NULL) {
+	# Get column names
+	.cell = enquo(.cell)
+	col_names = get_cell(input.df, .cell)
+	.cell = col_names$.cell
+
+	seurat_obj = input.df %>% attr("seurat")
+
+	# update meta.data with tibble
+	seurat_obj[[1]]@meta.data = input.df %>% as.data.frame(row.names = quo_name(.cell))
+
+	input.df %>% add_attr(seurat_obj, "seurat")
+}
+
 #' Check if sample already set by the user, otherwise take sample information from Seurat object
-#' I should check it with parameters attribute if sample_column is present
+#' I should check it with parameters attribute if .sample is present
 #' For the moment is fine like this
 #'
 #' @import dplyr
@@ -418,3 +444,26 @@ rename_sample_if_samples_not_set_by_user = function(input.df) {
     )
 }
 
+error_if_parameters_not_match = function(par1, par2){
+
+	# Covert enquo to strings
+	par1$.sample = quo_name(par1$.sample)
+	par1$.cell = quo_name(par1$.cell)
+	par1$.transcript = quo_name(par1$.transcript)
+	par1$.abundance = quo_name(par1$.abundance)
+
+	par2$.sample = quo_name(par2$.sample)
+	par2$.cell = quo_name(par2$.cell)
+	par2$.transcript = quo_name(par2$.transcript)
+	par2$.abundance = quo_name(par2$.abundance)
+
+	par = foreach(n = par1 %>% names) %do% {
+		c(par1[[n]], par2[[n]]) %>% grep("NULL", ., invert = T, value=T) %>% unique
+
+	} %>% setNames(par1 %>% names)
+
+	if(par %>% map_int(~ .x %>% length) %>% unique %>% equals(1) %>% `!`) {
+		print(cbind(par1, par2))
+		stop("the parameters of the two objects must match")
+	}
+}

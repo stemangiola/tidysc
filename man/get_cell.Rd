@@ -4,7 +4,7 @@
 \alias{get_cell}
 \title{Get column names either from user or from attributes}
 \usage{
-get_cell(input.df, cell_column)
+get_cell(input.df, .cell)
 }
 \arguments{
 \item{input.df}{A tibble}

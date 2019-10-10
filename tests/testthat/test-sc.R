@@ -4,10 +4,10 @@ context('Single cell functions')
 tt =
   create_tt_from_tibble_sc(
     ttSc:: counts_sc,
-    sample_column = sample,
-    cell_column = cell,
-    transcript_column = transcript,
-    counts_column = `read count`,
+    .sample = sample,
+    .cell = cell,
+    .transcript = transcript,
+    .abundance = `read count`,
     species = "Human"
   )
 

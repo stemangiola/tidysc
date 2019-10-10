@@ -4,7 +4,7 @@
 \alias{add_cell_cycle_annotation_sc}
 \title{Add cell cyle annotation}
 \usage{
-add_cell_cycle_annotation_sc(input.df, cell_column)
+add_cell_cycle_annotation_sc(input.df, .cell)
 }
 \arguments{
 \item{input.df}{A tt object}

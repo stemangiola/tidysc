@@ -4,7 +4,7 @@
 \alias{get_cluster_annotation_SNN_sc}
 \title{Get cluster information of single cells}
 \usage{
-get_cluster_annotation_SNN_sc(input.df)
+get_cluster_annotation_SNN_sc(input.df, ...)
 }
 \arguments{
 \item{input.df}{A tt object}

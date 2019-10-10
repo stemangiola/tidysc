@@ -9,7 +9,7 @@ error_if_wrong_input(input.df, list_input, expected_type)
 \arguments{
 \item{input.df}{A tibble of read counts}
 
-\item{counts_column}{A character name of the read count column}
+\item{.abundance}{A character name of the read count column}
 }
 \description{
 Check whether there are NA counts

@@ -3,7 +3,7 @@
 \name{rename_sample_if_samples_not_set_by_user}
 \alias{rename_sample_if_samples_not_set_by_user}
 \title{Check if sample already set by the user, otherwise take sample information from Seurat object
-I should check it with parameters attribute if sample_column is present
+I should check it with parameters attribute if .sample is present
 For the moment is fine like this}
 \usage{
 rename_sample_if_samples_not_set_by_user(input.df)
@@ -16,6 +16,6 @@ A seurat object
 }
 \description{
 Check if sample already set by the user, otherwise take sample information from Seurat object
-I should check it with parameters attribute if sample_column is present
+I should check it with parameters attribute if .sample is present
 For the moment is fine like this
 }

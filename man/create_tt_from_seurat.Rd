@@ -6,9 +6,8 @@
 \usage{
 create_tt_from_seurat(seurat_object, dir_names = list(""),
   min.transcripts = 400, min.cells = 5, high.mito.thresh = 0.08,
-  high.umi.thresh = 10000, sample_column = sample,
-  cell_column = cell, species, genome = ifelse(species == "Human",
-  "hg38", "mm10"))
+  high.umi.thresh = 10000, .sample = sample, .cell = cell, species,
+  genome = ifelse(species == "Human", "hg38", "mm10"))
 }
 \arguments{
 \item{seurat_object}{A seurat object}
@@ -23,9 +22,9 @@ create_tt_from_seurat(seurat_object, dir_names = list(""),
 
 \item{high.umi.thresh}{An numeric with the threshold of the maximum fraction of umis. Used for filtering}
 
-\item{sample_column}{A symbol for the sample column}
+\item{.sample}{A symbol for the sample column}
 
-\item{cell_column}{A symbol for the cell column}
+\item{.cell}{A symbol for the cell column}
 
 \item{species}{A character name of the species}
 
