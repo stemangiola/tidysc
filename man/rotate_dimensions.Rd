@@ -2,7 +2,7 @@
 % Please edit documentation in R/methods.R
 \name{rotate_dimensions}
 \alias{rotate_dimensions}
-\title{Rotate two dimensions (e.g., principal components) of an arbitrary angle}
+\title{Rotate two dimensions (e.g., principal .dims) of an arbitrary angle}
 \usage{
 rotate_dimensions(.data, dimension_1_column, dimension_2_column,
   rotation_degrees, of_samples = T, dimension_1_column_rotated = NULL,
@@ -43,11 +43,11 @@ This function to rotate two dimensions such as the reduced dimensions.
 
 counts.MDS.rotated =
     counts.MDS \%>\%
-    rotate_dimensions(`Dim 1`, `Dim 2`, rotation_degrees = 45, .element = sample)
+    rotate_dimensions(`tSNE 1`, `tSNE 2`, rotation_degrees = 45, .element = sample)
 
 counts.MDS.rotated \%>\%
-    distinct(sample, `Dim 1`,`Dim 2`, `Cell type`) \%>\%
-    ggplot(aes(x=`Dim 1`, y=`Dim 2`, color=`Cell type` )) +
+    distinct(sample, `tSNE 1`,`tSNE 2`, `Cell type`) \%>\%
+    ggplot(aes(x=`tSNE 1`, y=`tSNE 2`, color=`Cell type` )) +
     geom_point()
 }
 

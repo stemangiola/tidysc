@@ -4,10 +4,10 @@
 \alias{get_cell_cycle_annotation_sc}
 \title{Get cell cyle annotation}
 \usage{
-get_cell_cycle_annotation_sc(input.df, .cell)
+get_cell_cycle_annotation_sc(.data, .cell)
 }
 \arguments{
-\item{input.df}{A tt object}
+\item{.data}{A tt object}
 }
 \value{
 A tt object

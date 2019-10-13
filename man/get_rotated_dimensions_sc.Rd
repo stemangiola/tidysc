@@ -2,7 +2,7 @@
 % Please edit documentation in R/functions_sc.R
 \name{get_rotated_dimensions_sc}
 \alias{get_rotated_dimensions_sc}
-\title{Get rotated dimensions of two principal components or MDS dimension of choice, of an angle}
+\title{Get rotated dimensions of two principal .dims or MDS dimension of choice, of an angle}
 \usage{
 get_rotated_dimensions_sc(.data, dimension_1_column, dimension_2_column,
   rotation_degrees, .element = NULL, of_samples = T,
@@ -29,5 +29,5 @@ get_rotated_dimensions_sc(.data, dimension_1_column, dimension_2_column,
 A tibble with additional rotated columns
 }
 \description{
-Get rotated dimensions of two principal components or MDS dimension of choice, of an angle
+Get rotated dimensions of two principal .dims or MDS dimension of choice, of an angle
 }

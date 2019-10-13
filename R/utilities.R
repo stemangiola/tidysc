@@ -6,7 +6,7 @@
 #' @import tidyr
 #' @importFrom purrr as_mapper
 #'
-#' @param input.df A tibble
+#' @param .data A tibble
 #' @param condition A boolean
 #' @return A tibble
 ifelse_pipe = function(.x, .p, .f1, .f2 = NULL) {
@@ -24,7 +24,7 @@ ifelse_pipe = function(.x, .p, .f1, .f2 = NULL) {
 #' @import dplyr
 #' @import tidyr
 #'
-#' @param input.df A tibble
+#' @param .data A tibble
 #' @param condition A boolean
 #' @return A tibble
 ifelse2_pipe = function(.x, .p1, .p2, .f1, .f2, .f3 = NULL) {
@@ -104,7 +104,7 @@ error_if_log_transformed <- function(x, .abundance) {
   if (x %>% nrow %>% `>` (0))
     if (x %>% summarise(m = !!.abundance %>% max) %>% pull(m) < 50)
       stop(
-        "The input was log transformed, this algorithm requires raw (un-normalised) read counts"
+        "The input was log transformed, this algorithm requires raw (un-normalised) counts"
       )
 }
 
@@ -115,20 +115,20 @@ error_if_log_transformed <- function(x, .abundance) {
 #' @import tibble
 #'
 #'
-#' @param input.df A tibble of read counts
+#' @param .data A tibble of counts
 #' @param .sample A character name of the sample column
 #' @param .transcript A character name of the gene/transcript name column
-#' @param .abundance A character name of the read count column
-error_if_duplicated_genes <- function(input.df,
+#' @param .abundance A character name of the count column
+error_if_duplicated_genes <- function(.data,
                                       .sample = `sample`,
                                       .transcript = `transcript`,
-                                      .abundance = `read count`) {
+                                      .abundance = `count`) {
   .sample = enquo(.sample)
   .transcript = enquo(.transcript)
   .abundance = enquo(.abundance)
 
   duplicates <-
-    input.df %>%
+    .data %>%
     select(!!.sample,!!.transcript,!!.abundance) %>%
     distinct() %>%
     count(!!.sample,!!.transcript) %>%
@@ -143,7 +143,7 @@ error_if_duplicated_genes <- function(input.df,
     )
   }
 
-  input.df
+  .data
 
 }
 
@@ -154,17 +154,17 @@ error_if_duplicated_genes <- function(input.df,
 #' @import tibble
 #'
 #'
-#' @param input.df A tibble of read counts
-#' @param .abundance A character name of the read count column
-error_if_counts_is_na = function(input.df, .abundance) {
+#' @param .data A tibble of counts
+#' @param .abundance A character name of the count column
+error_if_counts_is_na = function(.data, .abundance) {
   .abundance = enquo(.abundance)
 
   # Do the check
-  if (input.df %>% filter(!!.abundance %>% is.na) %>% nrow %>% `>` (0))
+  if (.data %>% filter(!!.abundance %>% is.na) %>% nrow %>% `>` (0))
     stop("You have NA values in your counts")
 
   # If all good return original data frame
-  input.df
+  .data
 }
 
 #' Check whether there are NA counts
@@ -174,9 +174,9 @@ error_if_counts_is_na = function(input.df, .abundance) {
 #' @import tibble
 #'
 #'
-#' @param input.df A tibble of read counts
-#' @param .abundance A character name of the read count column
-error_if_wrong_input = function(input.df, list_input, expected_type) {
+#' @param .data A tibble of counts
+#' @param .abundance A character name of the count column
+error_if_wrong_input = function(.data, list_input, expected_type) {
 
 
 
@@ -192,7 +192,7 @@ error_if_wrong_input = function(input.df, list_input, expected_type) {
     stop("You have passed the wrong argument to the function. Please check again.")
 
   # If all good return original data frame
-  input.df
+  .data
 }
 
 
@@ -286,7 +286,7 @@ add_class = function(var, name) {
 
 #' Sub function of drop_redundant_elements_though_reduced_dimensions
 #'
-#' @param input.df A tibble
+#' @param .data A tibble
 #' @return A tibble with pairs to drop
 select_closest_pairs = function(df) {
   couples <- df %>% head(n = 0)
@@ -351,11 +351,11 @@ drop_assay = function(var, assay_name) {
 #'
 #' @importFrom rlang quo_is_symbol
 #'
-#' @param input.df A tibble
+#' @param .data A tibble
 #' @param elements_column A character name of the sample column
 #'
 #' @return A list of column enquo or error
-get_cell = function(input.df, .cell) {
+get_cell = function(.data, .cell) {
   # If setted by the user, enquo those
   if (.cell %>% quo_is_symbol())
     return(list(.cell = .cell))
@@ -363,9 +363,9 @@ get_cell = function(input.df, .cell) {
   # Otherwise check if attribute exists
   else {
     # If so, take them from the attribute
-    if (input.df %>% attr("parameters") %>% is.null %>% `!`)
+    if (.data %>% attr("parameters") %>% is.null %>% `!`)
       return(list(.cell =   unlist(attr(
-        input.df, "parameters"
+        .data, "parameters"
       ))$.cell))
 
     # Else through error
@@ -393,36 +393,36 @@ get_cell = function(input.df, .cell) {
 #' @param assay_name An character name of the assay
 #'
 #' @return A tt object
-update_object_sc = function(input.df, .cell = NULL) {
+update_object_sc = function(.data, .cell = NULL) {
   # Get column names
   .cell = enquo(.cell)
-  col_names = get_cell(input.df, .cell)
+  col_names = get_cell(.data, .cell)
   .cell = col_names$.cell
 
-  input.df %>%
+  .data %>%
     add_attr((.) %>%
                attr("seurat") %>%
                map(~ subset(
                  .x,
-                 cells = input.df %>%
+                 cells = .data %>%
                    pull(!!.cell) %>%
                    as.character()
                )),
              "seurat")
 }
 
-update_metadata_sc = function(input.df, .cell = NULL) {
+update_metadata_sc = function(.data, .cell = NULL) {
 	# Get column names
 	.cell = enquo(.cell)
-	col_names = get_cell(input.df, .cell)
+	col_names = get_cell(.data, .cell)
 	.cell = col_names$.cell
 
-	seurat_obj = input.df %>% attr("seurat")
+	seurat_obj = .data %>% attr("seurat")
 
 	# update meta.data with tibble
-	seurat_obj[[1]]@meta.data = input.df %>% as.data.frame(row.names = quo_name(.cell))
+	seurat_obj[[1]]@meta.data = .data %>% as.data.frame(row.names = quo_name(.cell))
 
-	input.df %>% add_attr(seurat_obj, "seurat")
+	.data %>% add_attr(seurat_obj, "seurat")
 }
 
 #' Check if sample already set by the user, otherwise take sample information from Seurat object
@@ -432,11 +432,11 @@ update_metadata_sc = function(input.df, .cell = NULL) {
 #' @import dplyr
 #' @import Seurat
 #'
-#' @param input.df A seurat object
+#' @param .data A seurat object
 #'
 #' @return A seurat object
-rename_sample_if_samples_not_set_by_user = function(input.df) {
-  input.df %>%
+rename_sample_if_samples_not_set_by_user = function(.data) {
+  .data %>%
     ifelse_pipe(
       (.) %>% distinct(`orig.ident`) %>% as.character == 1,
       ~ .x %>% select(-`orig.ident`),

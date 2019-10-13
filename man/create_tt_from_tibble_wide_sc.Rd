@@ -4,13 +4,13 @@
 \alias{create_tt_from_tibble_wide_sc}
 \title{Create tt object from tibble}
 \usage{
-create_tt_from_tibble_wide_sc(input.df, .sample, .transcript_position,
-  .cell, species, min.transcripts = 400, min.cells = 5,
+create_tt_from_tibble_wide_sc(.data, .sample, .transcript_position, .cell,
+  species, min.transcripts = 400, min.cells = 5,
   high.mito.thresh = 0.08, high.umi.thresh = 10000,
   genome = ifelse(species == "Human", "hg38", "mm10"), ...)
 }
 \arguments{
-\item{input.df}{A tibble}
+\item{.data}{A tibble}
 
 \item{.sample}{A character name of the sample column}
 
@@ -20,7 +20,7 @@ create_tt_from_tibble_wide_sc(input.df, .sample, .transcript_position,
 
 \item{.transcript}{A character name of the transcript name column}
 
-\item{.abundance}{A character name of the read count column}
+\item{.abundance}{A character name of the count column}
 }
 \value{
 A tibble with an additional column

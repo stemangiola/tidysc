@@ -7,7 +7,7 @@
 do_integration_seurat(seurat_list)
 }
 \arguments{
-\item{input.df}{A seurat list}
+\item{.data}{A seurat list}
 }
 \value{
 A tt seurat object

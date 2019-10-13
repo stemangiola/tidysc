@@ -4,10 +4,10 @@
 \alias{get_normalised_counts_sc}
 \title{Get normalised counts}
 \usage{
-get_normalised_counts_sc(input.df)
+get_normalised_counts_sc(.data)
 }
 \arguments{
-\item{input.df}{A tt object}
+\item{.data}{A tt object}
 }
 \value{
 A tt object

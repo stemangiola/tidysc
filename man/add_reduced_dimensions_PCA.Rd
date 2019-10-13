@@ -2,18 +2,18 @@
 % Please edit documentation in R/functions_sc.R
 \name{add_reduced_dimensions_PCA}
 \alias{add_reduced_dimensions_PCA}
-\title{Add principal components}
+\title{Add principal .dims}
 \usage{
-add_reduced_dimensions_PCA(input.df, components = 10)
+add_reduced_dimensions_PCA(.data, .dims = 10)
 }
 \arguments{
-\item{input.df}{A tt object}
+\item{.data}{A tt object}
 
-\item{components}{An integer, the number of components to calculate}
+\item{.dims}{An integer, the number of .dims to calculate}
 }
 \value{
 A tt object
 }
 \description{
-Add principal components
+Add principal .dims
 }

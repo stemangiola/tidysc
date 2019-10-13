@@ -4,11 +4,11 @@
 \alias{create_seurat_from_tibble}
 \title{Create seurat object from tibble}
 \usage{
-create_seurat_from_tibble(input.df, .sample, .cell, .transcript,
-  .abundance, min.transcripts = 400, min.cells = 5, ...)
+create_seurat_from_tibble(.data, .sample, .cell, .transcript, .abundance,
+  min.transcripts = 400, min.cells = 5, ...)
 }
 \arguments{
-\item{input.df}{A tibble}
+\item{.data}{A tibble}
 
 \item{.sample}{A symbol for the sample column}
 
@@ -16,7 +16,7 @@ create_seurat_from_tibble(input.df, .sample, .cell, .transcript,
 
 \item{.transcript}{A symbol for the transcript name column}
 
-\item{.abundance}{A symbol for read counts}
+\item{.abundance}{A symbol for counts}
 }
 \value{
 A tt object

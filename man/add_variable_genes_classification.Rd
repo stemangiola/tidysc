@@ -4,10 +4,10 @@
 \alias{add_variable_genes_classification}
 \title{Add variable gene annotation}
 \usage{
-add_variable_genes_classification(input.df)
+add_variable_genes_classification(.data)
 }
 \arguments{
-\item{input.df}{A tt object}
+\item{.data}{A tt object}
 }
 \value{
 A tt object

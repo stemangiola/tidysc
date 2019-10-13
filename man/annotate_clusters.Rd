@@ -4,12 +4,12 @@
 \alias{annotate_clusters}
 \title{Get clusters of elements (e.g., samples or transcripts)}
 \usage{
-annotate_clusters(input.df, action = "add")
+annotate_clusters(.data, action = "add")
 }
 \arguments{
-\item{action}{A character string. Whether to join the new information to the input tbl (add), or just get the non-redundant tbl with the new information (get).}
-
 \item{.data}{A `tbl` formatted as | <SAMPLE> | <TRANSCRIPT> | <COUNT> | <...> |}
+
+\item{action}{A character string. Whether to join the new information to the input tbl (add), or just get the non-redundant tbl with the new information (get).}
 
 \item{.element}{The name of the element column (normally samples).}
 

@@ -2,14 +2,14 @@
 % Please edit documentation in R/functions_sc.R
 \name{aggregate_duplicated_transcripts_wide_sc}
 \alias{aggregate_duplicated_transcripts_wide_sc}
-\title{Aggregates multiple read counts from the same samples/cells in a wide format (e.g., from isoforms)
-This function aggregates read counts over samples, concatenates other character columns, and averages other numeric columns}
+\title{Aggregates multiple counts from the same samples/cells in a wide format (e.g., from isoforms)
+This function aggregates counts over samples, concatenates other character columns, and averages other numeric columns}
 \usage{
-aggregate_duplicated_transcripts_wide_sc(input.df,
+aggregate_duplicated_transcripts_wide_sc(.data,
   aggregation_function = sum, .sample, .transcript, keep_integer = T)
 }
 \arguments{
-\item{input.df}{A tibble}
+\item{.data}{A tibble}
 
 \item{aggregation_function}{A function for counts aggregation (e.g., sum)}
 
@@ -17,12 +17,12 @@ aggregate_duplicated_transcripts_wide_sc(input.df,
 
 \item{.transcript}{A character name of the gene/transcript name column}
 
-\item{.abundance}{A character name of the read count column}
+\item{.abundance}{A character name of the count column}
 }
 \value{
 A tibble with aggregated genes and annotation
 }
 \description{
-Aggregates multiple read counts from the same samples/cells in a wide format (e.g., from isoforms)
-This function aggregates read counts over samples, concatenates other character columns, and averages other numeric columns
+Aggregates multiple counts from the same samples/cells in a wide format (e.g., from isoforms)
+This function aggregates counts over samples, concatenates other character columns, and averages other numeric columns
 }

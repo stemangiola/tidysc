@@ -4,13 +4,13 @@
 \alias{create_tt_from_tibble_sc}
 \title{Create tt object from tibble}
 \usage{
-create_tt_from_tibble_sc(input.df, .sample, .cell, .transcript, .abundance,
+create_tt_from_tibble_sc(.data, .sample, .cell, .transcript, .abundance,
   species, min.transcripts = 400, min.cells = 5,
   high.mito.thresh = 0.08, high.umi.thresh = 10000,
   genome = ifelse(species == "Human", "hg38", "mm10"), ...)
 }
 \arguments{
-\item{input.df}{A tibble}
+\item{.data}{A tibble}
 
 \item{.sample}{A character name of the sample column}
 
@@ -18,7 +18,7 @@ create_tt_from_tibble_sc(input.df, .sample, .cell, .transcript, .abundance,
 
 \item{.transcript}{A character name of the transcript name column}
 
-\item{.abundance}{A character name of the read count column}
+\item{.abundance}{A character name of the count column}
 
 \item{species}{A character name of the species used (e.g., Mouse, Human)}
 }

@@ -2,7 +2,7 @@
 % Please edit documentation in R/functions_sc.R
 \name{add_rotated_dimensions_sc}
 \alias{add_rotated_dimensions_sc}
-\title{Add Rotated dimensions of two principal components or MDS dimensions, of an angle}
+\title{Add Rotated dimensions of two principal .dims or MDS dimensions, of an angle}
 \usage{
 add_rotated_dimensions_sc(.data, dimension_1_column, dimension_2_column,
   rotation_degrees, .element = NULL, of_samples = T,
@@ -29,5 +29,5 @@ add_rotated_dimensions_sc(.data, dimension_1_column, dimension_2_column,
 A tibble with additional rotated columns
 }
 \description{
-Add Rotated dimensions of two principal components or MDS dimensions, of an angle
+Add Rotated dimensions of two principal .dims or MDS dimensions, of an angle
 }

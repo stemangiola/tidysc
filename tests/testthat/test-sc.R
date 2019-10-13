@@ -3,15 +3,15 @@ context('Single cell functions')
 # Build tt object
 tt =
   create_tt_from_tibble_sc(
-    ttSc:: counts_sc,
+    ttSc:: counts,
     .sample = sample,
     .cell = cell,
     .transcript = transcript,
-    .abundance = `read count`,
+    .abundance = `count`,
     species = "Human"
   )
 
-test_that("Test data frame",{ expect_equal( ncol(ttSc::counts_sc), 6 ) })
+test_that("Test data frame",{ expect_equal( ncol(ttSc::counts), 6 ) })
 
 test_that("Create tt object from tibble",{
 
@@ -81,7 +81,7 @@ test_that("Add variable genes classification",{
   my_tt =  add_variable_genes_classification(tt)
 
   expect_equal( ncol(my_tt), 11 )
-  expect_equal( my_tt$`read count total`[1:4], c(8839,  3613, 11841, 14665))
+  expect_equal( my_tt$`count total`[1:4], c(8839,  3613, 11841, 14665))
 
 })
 
@@ -105,22 +105,22 @@ test_that("Add cell cycle annotation",{
 
 test_that("Get reduced dimensions PCA",{
 
-  components = 10
+  .dims = 10
 
-  my_tt =  get_reduced_dimensions_PCA(tt, components = 10)
+  my_tt =  get_reduced_dimensions_PCA(tt, .dims = 10)
 
-  expect_equal( ncol(my_tt), components + 1 )
+  expect_equal( ncol(my_tt), .dims + 1 )
   expect_equal( my_tt$`PC 1`[1:4], c(6.279411 ,  4.115689, -27.747529, -32.714527), tolerance=1e-7)
 
 })
 
 test_that("Add reduced dimensions PCA",{
 
-  components = 10
+  .dims = 10
 
-  my_tt =  add_reduced_dimensions_PCA(tt, components = 10)
+  my_tt =  add_reduced_dimensions_PCA(tt, .dims = 10)
 
-  expect_equal( ncol(my_tt), components + 11 )
+  expect_equal( ncol(my_tt), .dims + 11 )
   expect_equal( my_tt$`PC 1`[1:4], c(21.75515, 14.47006, 17.83543, 16.21051), tolerance=1e-7)
 
 })
@@ -140,7 +140,7 @@ test_that("Add reduced dimensions UMAP",{
 
   my_tt =  add_reduced_dimensions_UMAP(tt)
 
-  expect_equal( ncol(my_tt), components + 3 )
+  expect_equal( ncol(my_tt), .dims + 3 )
   expect_equal( my_tt$`UMAP 1`[1:4], c(1.306986, 1.476799, 1.620057, 1.563925), tolerance=1e-7)
 
 })

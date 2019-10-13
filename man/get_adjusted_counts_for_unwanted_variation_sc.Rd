@@ -2,15 +2,15 @@
 % Please edit documentation in R/functions_sc.R
 \name{get_adjusted_counts_for_unwanted_variation_sc}
 \alias{get_adjusted_counts_for_unwanted_variation_sc}
-\title{Get adjusted read counts for unwanted variation}
+\title{Get adjusted counts for unwanted variation}
 \usage{
-get_adjusted_counts_for_unwanted_variation_sc(input.df, formula,
+get_adjusted_counts_for_unwanted_variation_sc(.data, .formula,
   do.scale = F, do.center = F)
 }
 \arguments{
-\item{input.df}{A seurat list}
+\item{.data}{A seurat list}
 
-\item{formula}{A formula}
+\item{.formula}{A formula}
 
 \item{do.scale}{A boolean}
 
@@ -20,5 +20,5 @@ get_adjusted_counts_for_unwanted_variation_sc(input.df, formula,
 A tt seurat object
 }
 \description{
-Get adjusted read counts for unwanted variation
+Get adjusted counts for unwanted variation
 }

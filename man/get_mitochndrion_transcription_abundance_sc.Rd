@@ -4,10 +4,10 @@
 \alias{get_mitochndrion_transcription_abundance_sc}
 \title{Calculate mitochondrion transcription abundance}
 \usage{
-get_mitochndrion_transcription_abundance_sc(input.df, .cell)
+get_mitochndrion_transcription_abundance_sc(.data, .cell)
 }
 \arguments{
-\item{input.df}{A tt object}
+\item{.data}{A tt object}
 }
 \value{
 A tt object

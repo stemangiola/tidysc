@@ -35,41 +35,41 @@
 #' }
 #'
 ttSc_long <- function(.data,
-                          .sample,
-                        .cell,
-                          .transcript,
-                          .abundance,
-                        species,
-                        min.transcripts = 400,
-                        min.cells = 5,
-                        ...) {
+                      .sample,
+                      .cell,
+                      .transcript,
+                      .abundance,
+                      species,
+                      min.transcripts = 400,
+                      min.cells = 5,
+                      ...) {
   UseMethod("ttSc_long", .data)
 }
 #' @export
 ttSc_long.default <- function(.data,
-                                  .sample,
-                                .cell,
+                              .sample,
+                              .cell,
 
-                                  .transcript,
-                                  .abundance,
-                                species,
-                                min.transcripts = 400,
-                                min.cells = 5,
-                                ...)
+                              .transcript,
+                              .abundance,
+                              species,
+                              min.transcripts = 400,
+                              min.cells = 5,
+                              ...)
 {
   print("This function cannot be applied to this object")
 }
 #' @export
 ttSc_long.tbl_df <- function(.data,
-                                 .sample,
-                               .cell,
+                             .sample,
+                             .cell,
 
-                                 .transcript,
-                                 .abundance,
-                               species,
-                               min.transcripts = 400,
-                               min.cells = 5,
-                               ...)
+                             .transcript,
+                             .abundance,
+                             species,
+                             min.transcripts = 400,
+                             min.cells = 5,
+                             ...)
 {
   # Make col names
   .sample = enquo(.sample)
@@ -77,15 +77,17 @@ ttSc_long.tbl_df <- function(.data,
   .transcript = enquo(.transcript)
   .abundance = enquo(.abundance)
 
-  create_tt_from_tibble_sc(input.df,
-                           .sample = !!.sample,
-                           .cell = !!.cell,
-                           .transcript = !!.transcript,
-                           .abundance = !!.abundance,
-                           species = species,
-                           min.transcripts = min.transcripts,
-                           min.cells = min.cells,
-                           ...)
+  create_tt_from_tibble_sc(
+    .data,
+    .sample = !!.sample,
+    .cell = !!.cell,
+    .transcript = !!.transcript,
+    .abundance = !!.abundance,
+    species = species,
+    min.transcripts = min.transcripts,
+    min.cells = min.cells,
+    ...
+  )
 
 }
 
@@ -146,11 +148,10 @@ normalise_abundance.tbl_df = normalise_abundance.ttSc <-
   function(.data,
            action = "add")
   {
-
     if (action == "add")
-      add_normalised_counts_sc(input.df)
+      add_normalised_counts_sc(.data)
     else if (action == "get")
-      get_normalised_counts_sc(input.df)
+      get_normalised_counts_sc(.data)
     else
       stop(
         "action must be either \"add\" for adding this information to your data frame or \"get\" to just get the information"
@@ -198,27 +199,26 @@ normalise_abundance.tbl_df = normalise_abundance.ttSc <-
 #'
 #' @export
 #'
-annotate_clusters <- function(input.df,
-                          action = "add") {
-  UseMethod("annotate_clusters", input.df)
+annotate_clusters <- function(.data,
+                              action = "add") {
+  UseMethod("annotate_clusters", .data)
 }
 
 #' @export
-annotate_clusters.default <-  function(input.df,
-                                   action = "add")
+annotate_clusters.default <-  function(.data,
+                                       action = "add")
 {
   print("This function cannot be applied to this object")
 }
 
 #' @export
-annotate_clusters.ttSc <-  function(input.df,
-                                action = "add")
+annotate_clusters.ttSc <-  function(.data,
+                                    action = "add")
 {
-
   if (action == "add")
-    add_cluster_annotation_SNN_sc( input.df)
+    add_cluster_annotation_SNN_sc(.data)
   else if (action == "get")
-    get_cluster_annotation_SNN_sc(input.df)
+    get_cluster_annotation_SNN_sc(.data)
   else
     stop(
       "action must be either \"add\" for adding this information to your data frame or \"get\" to just get the information"
@@ -244,7 +244,7 @@ annotate_clusters.ttSc <-  function(input.df,
 #' @param method A character string. The dimension reduction algorithm to use (PCA, MDS, tSNE).
 #' @param top An integer. How many top genes to select for dimensionality reduction
 #' @param of_samples A boolean. In case the input is a ttSc object, it indicates Whether the element column will be sample or transcript column
-#' @param .dims A list of integer vectors corresponding to principal components of interest (e.g., list(1:2, 3:4, 5:6))
+#' @param .dims A list of integer vectors corresponding to principal .dims of interest (e.g., list(1:2, 3:4, 5:6))
 
 #' @param log_transform A boolean, whether the value should be log-transformed (e.g., TRUE for RNA sequencing data)
 #' @param scale A boolean for method="PCA", this will be passed to the `prcomp` function. It is not included in the ... argument because although the default for `prcomp` if FALSE, it is advisable to set it as TRUE.
@@ -286,35 +286,37 @@ annotate_clusters.ttSc <-  function(input.df,
 #' @export
 #'
 #'
-reduce_dimensions <- function(input.df, method, components = 10,
+reduce_dimensions <- function(.data,
+                              method,
+                              .dims = 10,
                               action = "add") {
-  UseMethod("reduce_dimensions", input.df)
+  UseMethod("reduce_dimensions", .data)
 }
 
 #' @export
-reduce_dimensions.default <-  function(input.df, method, components = 10,
-                                       action = "add")
-{
-  print("This function cannot be applied to this object")
-}
+reduce_dimensions.default <-
+  function(.data,
+           method,
+           .dims = 10,
+           action = "add")
+  {
+    print("This function cannot be applied to this object")
+  }
 
 #' @export
 reduce_dimensions.ttSc <-
-  function(input.df, method, components = 10,
+  function(.data,
+           method,
+           .dims = 10,
            action = "add")
   {
-
-
     if (method == "PCA") {
       if (action == "add")
-        add_reduced_dimensions_PCA(
-          input.df,
-          components = components
-        )
+        add_reduced_dimensions_PCA(.data,
+                                   .dims = .dims)
       else if (action == "get")
-        get_reduced_dimensions_PCA(input.df,
-                                   components = components
-        )
+        get_reduced_dimensions_PCA(.data,
+                                   .dims = .dims)
       else
         stop(
           "action must be either \"add\" for adding this information to your data frame or \"get\" to just get the information"
@@ -322,13 +324,11 @@ reduce_dimensions.ttSc <-
     }
     else if (method == "tSNE") {
       if (action == "add")
-        add_reduced_dimensions_TSNE(input.df,
-                                    components = components
-        )
+        add_reduced_dimensions_TSNE(.data,
+                                    .dims = .dims)
       else if (action == "get")
-        get_reduced_dimensions_TSNE(input.df,
-                                    components = components
-        )
+        get_reduced_dimensions_TSNE(.data,
+                                    .dims = .dims)
       else
         stop(
           "action must be either \"add\" for adding this information to your data frame or \"get\" to just get the information"
@@ -337,13 +337,11 @@ reduce_dimensions.ttSc <-
     }
     else if (method == "UMAP") {
       if (action == "add")
-        add_reduced_dimensions_UMAP(input.df,
-                                    components = components
-        )
+        add_reduced_dimensions_UMAP(.data,
+                                    .dims = .dims)
       else if (action == "get")
-        get_reduced_dimensions_UMAP(input.df,
-                                    components = components
-        )
+        get_reduced_dimensions_UMAP(.data,
+                                    .dims = .dims)
       else
         stop(
           "action must be either \"add\" for adding this information to your data frame or \"get\" to just get the information"
@@ -357,7 +355,7 @@ reduce_dimensions.ttSc <-
 
 
 
-#' Rotate two dimensions (e.g., principal components) of an arbitrary angle
+#' Rotate two dimensions (e.g., principal .dims) of an arbitrary angle
 #'
 #' @description rotate_dimensions() takes as imput a `tbl` formatted as | <DIMENSION 1> | <DIMENSION 2> | <...> | and calculates the rotated dimensional space of the transcript abundance.
 #'
@@ -390,11 +388,11 @@ reduce_dimensions.ttSc <-
 #'
 #' counts.MDS.rotated =
 #'     counts.MDS %>%
-#'     rotate_dimensions(`Dim 1`, `Dim 2`, rotation_degrees = 45, .element = sample)
+#'     rotate_dimensions(`tSNE 1`, `tSNE 2`, rotation_degrees = 45, .element = sample)
 #'
 #' counts.MDS.rotated %>%
-#'     distinct(sample, `Dim 1`,`Dim 2`, `Cell type`) %>%
-#'     ggplot(aes(x=`Dim 1`, y=`Dim 2`, color=`Cell type` )) +
+#'     distinct(sample, `tSNE 1`,`tSNE 2`, `Cell type`) %>%
+#'     ggplot(aes(x=`tSNE 1`, y=`tSNE 2`, color=`Cell type` )) +
 #'     geom_point()
 #'}
 #'
@@ -444,7 +442,7 @@ rotate_dimensions.tbl_df = rotate_dimensions.ttSc <-
 
 
     if (action == "add")
-      add_rotated_dimensions(
+      add_rotated_dimensions_sc(
         .data,
         dimension_1_column = !!dimension_1_column,
         dimension_2_column = !!dimension_2_column,
@@ -454,7 +452,7 @@ rotate_dimensions.tbl_df = rotate_dimensions.ttSc <-
         dimension_2_column_rotated = !!dimension_2_column_rotated
       )
     else if (action == "get")
-      get_rotated_dimensions(
+      get_rotated_dimensions_sc(
         .data,
         dimension_1_column = !!dimension_1_column,
         dimension_2_column = !!dimension_2_column,
@@ -559,20 +557,20 @@ drop_redundant.default <-  function(.data,
 }
 #' @export
 drop_redundant.tbl_df = drop_redundant.ttSc <-  function(.data,
-                                                           .element = NULL,
-                                                           .feature = NULL,
-                                                           .value,
-                                                           method,
+                                                         .element = NULL,
+                                                         .feature = NULL,
+                                                         .value,
+                                                         method,
 
-                                                           of_samples = T,
+                                                         of_samples = T,
 
 
 
-                                                           correlation_threshold = 0.9,
-                                                           log_transform = F,
+                                                         correlation_threshold = 0.9,
+                                                         log_transform = F,
 
-                                                           Dim_a_column,
-                                                           Dim_b_column)
+                                                         Dim_a_column,
+                                                         Dim_b_column)
 {
   # Make col names
   .value = enquo(.value)
@@ -641,12 +639,7 @@ drop_redundant.tbl_df = drop_redundant.ttSc <-  function(.data,
 #'
 #'
 #'
-#' adjust_abundance(
-#'     ~ factor_of_interest + batch,
-#'     sample,
-#'     transcript,
-#'     `count`
-#' )
+#' adjust_abundance( ~ factor_of_interest + batch )
 #'
 #'}
 #'
@@ -655,23 +648,17 @@ drop_redundant.tbl_df = drop_redundant.ttSc <-  function(.data,
 #'
 adjust_abundance <- function(.data,
                              .formula,
-                             .sample = NULL,
-                             .transcript = NULL,
-                             .abundance = NULL,
-                             log_transform = T,
-                             action = "add",
-                             ...) {
+                             do.scale = F,
+                             do.center = F,
+                             action = "add") {
   UseMethod("adjust_abundance", .data)
 }
 #' @export
 adjust_abundance.default <-  function(.data,
                                       .formula,
-                                      .sample = NULL,
-                                      .transcript = NULL,
-                                      .abundance = NULL,
-                                      log_transform = T,
-                                      action = "add",
-                                      ...)
+                                      do.scale = F,
+                                      do.center = F,
+                                      action = "add")
 {
   print("This function cannot be applied to this object")
 }
@@ -679,37 +666,25 @@ adjust_abundance.default <-  function(.data,
 adjust_abundance.tbl_df = adjust_abundance.ttSc <-
   function(.data,
            .formula,
-           .sample = NULL,
-           .transcript = NULL,
-           .abundance = NULL,
-           log_transform = T,
-           action = "add",
-           ...)
+           do.scale = F,
+           do.center = F,
+           action = "add")
   {
-    # Make col names
-    .sample = enquo(.sample)
-    .transcript = enquo(.transcript)
-    .abundance = enquo(.abundance)
+
 
     if (action == "add")
       add_adjusted_counts_for_unwanted_variation_sc(
-        .data,
-        .formula,
-        .sample = !!.sample,
-        .transcript = !!.transcript,
-        .abundance = !!.abundance,
-        log_transform = log_transform,
-        ...
+        .data = .data,
+        .formula = .formula,
+        do.scale = do.scale,
+        do.center = do.center
       )
     else if (action == "get")
       get_adjusted_counts_for_unwanted_variation_sc(
-        .data,
-        .formula,
-        .sample = !!.sample,
-        .transcript = !!.transcript,
-        .abundance = !!.abundance,
-        log_transform = log_transform,
-        ...
+        .data = .data,
+        .formula = .formula,
+        do.scale = do.scale,
+        do.center = do.center
       )
     else
       stop(
@@ -771,6 +746,7 @@ aggregate_duplicates <- function(.data,
                                  .sample = NULL,
                                  .transcript = NULL,
                                  .abundance = NULL,
+                                 shape = "long",
                                  keep_integer = T) {
   UseMethod("aggregate_duplicates", .data)
 }
@@ -781,6 +757,8 @@ aggregate_duplicates.default <-  function(.data,
                                           .sample = NULL,
                                           .transcript = NULL,
                                           .abundance = NULL,
+                                          shape = "long",
+
                                           keep_integer = T)
 {
   print("This function cannot be applied to this object")
@@ -791,23 +769,41 @@ aggregate_duplicates.tbl_df = aggregate_duplicates.ttSc <-
   function(.data,
            aggregation_function = sum,
            .sample = NULL,
+           .cell = NULL,
            .transcript = NULL,
            .abundance = NULL,
+           shape = "long",
            keep_integer = T)  {
     # Make col names
     .sample = enquo(.sample)
+    .cell = enquo(.cell)
     .transcript = enquo(.transcript)
     .abundance = enquo(.abundance)
 
+    if (shape == "long")
+      aggregate_duplicated_transcripts_sc(
+        .data = .data,
+        aggregation_function = aggregation_function,
+        .sample = !!.sample,
+        .cell  = !!.cell,
+        .transcript = !!.transcript,
+        .abundance = !!.abundance,
+        keep_integer = keep_integer
+      )
+    else if (shape == "wide")
+      aggregate_duplicated_transcripts_wide_sc(
+        .data,
+        aggregation_function = aggregation_function,
+        .sample = !!.sample,
+        .transcript = !!.transcript,
+        keep_integer = keep_integer
+      )
+    else
+      stop(
+        "action must be either \"long\" for sample | cell | transcript | abundance data frame, or \"wide\" for sample | cell | gene1 | gene2 | .. data frame "
+      )
 
-    aggregate_duplicated_transcripts_sc(
-      .data,
-      aggregation_function = aggregation_function,
-      .sample = !!.sample,
-      .transcript = !!.transcript,
-      .abundance = !!.abundance,
-      keep_integer = T
-    )
+
   }
 
 
@@ -849,52 +845,25 @@ aggregate_duplicates.tbl_df = aggregate_duplicates.ttSc <-
 #' @export
 #'
 annotate_cell_type <- function(.data,
-                               .sample = NULL,
-                               .transcript = NULL,
-                               .abundance = NULL,
-                               action = "add",
-                               ...) {
+                               action = "add") {
   UseMethod("annotate_cell_type", .data)
 }
 #' @export
 annotate_cell_type.default <-  function(.data,
-                                        .sample = NULL,
-                                        .transcript = NULL,
-                                        .abundance = NULL,
-                                        action = "add",
-                                        ...)
+
+                                        action = "add")
 {
   print("This function cannot be applied to this object")
 }
 #' @export
 annotate_cell_type.tbl_df = annotate_cell_type.ttSc <-
   function(.data,
-           .sample = NULL,
-           .transcript = NULL,
-           .abundance = NULL,
-           action = "add",
-           ...)  {
-    # Make col names
-    .sample = enquo(.sample)
-    .transcript = enquo(.transcript)
-    .abundance = enquo(.abundance)
+           action = "add")  {
 
     if (action == "add")
-      add_cell_type_proportions(
-        .data,
-        .sample = !!.sample,
-        .transcript = !!.transcript,
-        .abundance = !!.abundance,
-        ...
-      )
+      add_cell_type_annotation_sc(.data )
     else if (action == "get")
-      get_cell_type_proportions(
-        .data,
-        .sample = !!.sample,
-        .transcript = !!.transcript,
-        .abundance = !!.abundance,
-        ...
-      )
+      get_cell_type_annotation_sc(.data)
     else
       stop(
         "action must be either \"add\" for adding this information to your data frame or \"get\" to just get the information"
@@ -960,10 +929,10 @@ annotate_symbol.tbl_df = annotate_symbol.ttSc <-
 
 
     if (action == "add")
-      add_symbol_from_ensembl(.data, !!.ensembl)
+      add_symbol_from_ensembl(.data,!!.ensembl)
 
     else if (action == "get")
-      get_symbol_from_ensembl(.data, !!.ensembl)
+      get_symbol_from_ensembl(.data,!!.ensembl)
 
     else
       stop(
@@ -1075,6 +1044,89 @@ test_differential_transcription.tbl_df = test_differential_transcription.ttSc <-
       )
   }
 
+#' Add differential transcription information to a tbl using edgeR.
+#'
+#' @description extract_abundance() takes as imput a `tbl` formatted as | <SAMPLE> | <TRANSCRIPT> | <COUNT> | <...> | and returns a `tbl` with additional columns for the statistics from the hypothesis test.
+#'
+#' @importFrom rlang enquo
+#' @importFrom magrittr "%>%"
+#'
+#' @name extract_abundance
+#' @rdname extract_abundance
+#'
+#' @param .data A `tbl` formatted as | <SAMPLE> | <TRANSCRIPT> | <COUNT> | <...> |
+#' @param .formula A formula with no response variable, representing the desired linear model
+#' @param .sample The name of the sample column
+#' @param .transcript The name of the transcript/gene column
+#' @param .abundance The name of the transcript/gene abundance column
+#'
+#' @param significance_threshold A real between 0 and 1 (usually 0.05).
+#' @param action A character string. Whether to join the new information to the input tbl (add), or just get the non-redundant tbl with the new information (get).
+#'
+#' @details At the moment this function uses edgeR only, but other inference algorithms will be added in the near future.
+#'
+#' @return A `tbl` with additional columns for the statistics from the hypothesis test (e.g.,  log fold change, p-value and false discovery rate).
+#'
+#'
+#'
+#'
+#' @examples
+#'\donttest{
+#'
+#'
+#'
+#' 	extract_abundance(
+#' 	    ~ condition,
+#' 	    sample,
+#' 	    transcript,
+#' 	    `count`
+#' 	)
+#'
+#'}
+#'
+#' @export
+#'
+extract_abundance <- function(.data,
+                              transcripts = NULL,
+                              all = F,
+                              action = "add") {
+  UseMethod("extract_abundance", .data)
+}
+#' @export
+extract_abundance.default <-
+  function(.data,
+           transcripts = NULL,
+           all = F,
+           action = "add")
+  {
+    print("This function cannot be applied to this object")
+  }
+#' @export
+extract_abundance.tbl_df = extract_abundance.ttSc <-
+  function(.data,
+           transcripts = NULL,
+           all = F,
+           action = "add")
+  {
+
+    if (action == "add")
+      add_abundance_sc(
+        .data = .data,
+        transcripts = transcripts,
+        all = all
+      )
+    else if (action == "get")
+      get_abundance_sc(
+        .data = .data,
+        transcripts = transcripts,
+        all = all
+      )
+    else
+      stop(
+        "action must be either \"add\" for adding this information to your data frame or \"get\" to just get the information"
+      )
+  }
+
 
 # Join datasets
 
@@ -1094,7 +1146,5 @@ bind_rows.default <-  function(...)
 #' @export
 bind_rows.ttSc <- function(...)
 {
-
   merged_tt_object(...)
 }
-

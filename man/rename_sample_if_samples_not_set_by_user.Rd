@@ -6,10 +6,10 @@
 I should check it with parameters attribute if .sample is present
 For the moment is fine like this}
 \usage{
-rename_sample_if_samples_not_set_by_user(input.df)
+rename_sample_if_samples_not_set_by_user(.data)
 }
 \arguments{
-\item{input.df}{A seurat object}
+\item{.data}{A seurat object}
 }
 \value{
 A seurat object

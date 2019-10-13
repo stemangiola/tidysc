@@ -4,13 +4,15 @@
 \alias{adjust_abundance}
 \title{Adjust transcript abundance for unwanted variation}
 \usage{
-adjust_abundance(.data, .formula, .sample = NULL, .transcript = NULL,
-  .abundance = NULL, log_transform = T, action = "add", ...)
+adjust_abundance(.data, .formula, do.scale = F, do.center = F,
+  action = "add")
 }
 \arguments{
 \item{.data}{A `tbl` formatted as | <SAMPLE> | <TRANSCRIPT> | <COUNT> | <...> |}
 
 \item{.formula}{A formula with no response variable, representing the desired linear model where the first covariate is the factor of interest and the second covariate is the unwanted variation (of the kind ~ factor_of_intrest + batch)}
+
+\item{action}{A character string. Whether to join the new information to the input tbl (add), or just get the non-redundant tbl with the new information (get).}
 
 \item{.sample}{The name of the sample column}
 
@@ -19,8 +21,6 @@ adjust_abundance(.data, .formula, .sample = NULL, .transcript = NULL,
 \item{.abundance}{The name of the transcript/gene abundance column}
 
 \item{log_transform}{A boolean, whether the value should be log-transformed (e.g., TRUE for RNA sequencing data)}
-
-\item{action}{A character string. Whether to join the new information to the input tbl (add), or just get the non-redundant tbl with the new information (get).}
 
 \item{...}{Further parameters passed to the function sva::ComBat}
 }
@@ -38,12 +38,7 @@ This function adjusts the abundance for (known) unwanted variation. At the momen
 
 
 
-adjust_abundance(
-    ~ factor_of_interest + batch,
-    sample,
-    transcript,
-    `count`
-)
+adjust_abundance( ~ factor_of_interest + batch )
 
 }
 

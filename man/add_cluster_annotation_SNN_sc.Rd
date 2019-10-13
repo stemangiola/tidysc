@@ -4,10 +4,10 @@
 \alias{add_cluster_annotation_SNN_sc}
 \title{Add cluster information of single cells}
 \usage{
-add_cluster_annotation_SNN_sc(input.df, ...)
+add_cluster_annotation_SNN_sc(.data, ...)
 }
 \arguments{
-\item{input.df}{A tt object}
+\item{.data}{A tt object}
 }
 \value{
 A tt tt object

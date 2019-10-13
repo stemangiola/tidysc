@@ -9,7 +9,7 @@ https://github.com/satijalab/seurat/issues/1227}
 iterate_cell_cycle_scoreing(x, s.features, g2m.features, StartNBin = 24)
 }
 \arguments{
-\item{input.df}{A seurat object}
+\item{.data}{A seurat object}
 }
 \value{
 A seurat object

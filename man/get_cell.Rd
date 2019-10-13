@@ -4,10 +4,10 @@
 \alias{get_cell}
 \title{Get column names either from user or from attributes}
 \usage{
-get_cell(input.df, .cell)
+get_cell(.data, .cell)
 }
 \arguments{
-\item{input.df}{A tibble}
+\item{.data}{A tibble}
 
 \item{elements_column}{A character name of the sample column}
 }

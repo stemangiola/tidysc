@@ -7,7 +7,7 @@
 merged_tt_object(...)
 }
 \arguments{
-\item{input.df}{A tt object}
+\item{.data}{A tt object}
 }
 \value{
 A tt tt object

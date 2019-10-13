@@ -4,14 +4,16 @@
 \alias{reduce_dimensions}
 \title{Dimension reduction of the transcript abundance data}
 \usage{
-reduce_dimensions(input.df, method, components = 10, action = "add")
+reduce_dimensions(.data, method, .dims = 10, action = "add")
 }
 \arguments{
+\item{.data}{A `tbl` formatted as | <SAMPLE> | <TRANSCRIPT> | <COUNT> | <...> |}
+
 \item{method}{A character string. The dimension reduction algorithm to use (PCA, MDS, tSNE).}
 
-\item{action}{A character string. Whether to join the new information to the input tbl (add), or just get the non-redundant tbl with the new information (get).}
+\item{.dims}{A list of integer vectors corresponding to principal .dims of interest (e.g., list(1:2, 3:4, 5:6))}
 
-\item{.data}{A `tbl` formatted as | <SAMPLE> | <TRANSCRIPT> | <COUNT> | <...> |}
+\item{action}{A character string. Whether to join the new information to the input tbl (add), or just get the non-redundant tbl with the new information (get).}
 
 \item{.element}{The name of the element column (normally samples).}
 
@@ -22,8 +24,6 @@ reduce_dimensions(input.df, method, components = 10, action = "add")
 \item{top}{An integer. How many top genes to select for dimensionality reduction}
 
 \item{of_samples}{A boolean. In case the input is a ttSc object, it indicates Whether the element column will be sample or transcript column}
-
-\item{.dims}{A list of integer vectors corresponding to principal components of interest (e.g., list(1:2, 3:4, 5:6))}
 
 \item{log_transform}{A boolean, whether the value should be log-transformed (e.g., TRUE for RNA sequencing data)}
 

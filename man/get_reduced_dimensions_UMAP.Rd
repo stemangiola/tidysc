@@ -4,12 +4,12 @@
 \alias{get_reduced_dimensions_UMAP}
 \title{Get UMAP dimensions}
 \usage{
-get_reduced_dimensions_UMAP(input.df, components = 10)
+get_reduced_dimensions_UMAP(.data, .dims = 10)
 }
 \arguments{
-\item{input.df}{A tt object}
+\item{.data}{A tt object}
 
-\item{components}{An integer, the number of components to calculate}
+\item{.dims}{An integer, the number of .dims to calculate}
 }
 \value{
 A tt object

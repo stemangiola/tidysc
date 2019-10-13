@@ -4,10 +4,10 @@
 \alias{add_cell_type_annotation_sc}
 \title{Add cell type information on single cells}
 \usage{
-add_cell_type_annotation_sc(input.df)
+add_cell_type_annotation_sc(.data)
 }
 \arguments{
-\item{input.df}{A tt object}
+\item{.data}{A tt object}
 }
 \value{
 A tt tt object

@@ -4,10 +4,10 @@
 \alias{add_doublet_classification_sc}
 \title{Add doublet classification}
 \usage{
-add_doublet_classification_sc(input.df, doublet.reps)
+add_doublet_classification_sc(.data, doublet.reps)
 }
 \arguments{
-\item{input.df}{A tt object}
+\item{.data}{A tt object}
 
 \item{doublet.reps}{A numeric}
 }
