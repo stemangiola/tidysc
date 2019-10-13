@@ -1,6 +1,6 @@
 #' Creates a `tt` object from a `tbl``
 #'
-#' @description create_tt() creates a `tt` object from a `tbl` formatted as | <SAMPLE> | <TRANSCRIPT> | <COUNT> | <...> |
+#' @description ttSc_long() creates a `tt` object from a `tbl` formatted as | <SAMPLE> | <TRANSCRIPT> | <COUNT> | <...> |
 #'
 #' @importFrom rlang enquo
 #' @importFrom magrittr "%>%"
@@ -10,6 +10,7 @@
 #'
 #' @param .data A `tbl` formatted as | <SAMPLE> | <TRANSCRIPT> | <COUNT> | <...> |
 #' @param .sample The name of the sample column
+#' @param .cell The name of the cell column
 #' @param .transcript The name of the transcript/gene column
 #' @param .abundance The name of the transcript/gene abundance column
 #'
@@ -89,6 +90,83 @@ ttSc_long.tbl_df <- function(.data,
     ...
   )
 
+}
+
+#' Creates a `tt` object from a `tbl``
+#'
+#' @description ttSc_cell_ranger() creates a `tt` object from a `tbl` formatted as | <SAMPLE> | <TRANSCRIPT> | <COUNT> | <...> |
+#'
+#' @importFrom rlang enquo
+#' @importFrom magrittr "%>%"
+#'
+#' @name ttSc
+#' @rdname ttSc
+#'
+#' @param .data A `tbl` formatted as | <SAMPLE> | <TRANSCRIPT> | <COUNT> | <...> |
+#' @param .sample The name of the sample column
+#' @param .transcript The name of the transcript/gene column
+#' @param .abundance The name of the transcript/gene abundance column
+#'
+#' @details This function created a ttSc object and is useful if you want
+#' to avoid to specify .sample, .transcript and .abundance arguments all the times.
+#' The ttSc object have an attribute called parameters where these three
+#' arguments are stored as metadata. They can be extracted as attr(<object>, "parameters").
+#'
+#' @return A `ttSc` object
+#'
+#'
+#' @examples
+#' \donttest{
+#'
+#'
+#'
+#' my_tt =
+#'     ttSc::counts %>%
+#'     ttSc(sample, transcript, counts)
+#'
+#' class(my_tt)
+#'
+#' }
+#'
+ttSc_cell_ranger <- function(dir_names,
+                             min.transcripts = 400,
+                             min.cells = 5,
+                             high.mito.thresh = 0.08,
+                             high.umi.thresh = 10000,
+                             species,
+                             genome = ifelse(species == "Human", "hg38", "mm10")) {
+  UseMethod("ttSc_cell_ranger", .data)
+}
+#' @export
+ttSc_cell_ranger.default <- function(dir_names,
+                                     min.transcripts = 400,
+                                     min.cells = 5,
+                                     high.mito.thresh = 0.08,
+                                     high.umi.thresh = 10000,
+                                     species,
+                                     genome = ifelse(species == "Human", "hg38", "mm10"))
+{
+  print("This function cannot be applied to this object")
+}
+#' @export
+ttSc_cell_ranger.tbl_df <- function(dir_names,
+                                    min.transcripts = 400,
+                                    min.cells = 5,
+                                    high.mito.thresh = 0.08,
+                                    high.umi.thresh = 10000,
+                                    species,
+                                    genome = ifelse(species == "Human", "hg38", "mm10"))
+{
+
+  create_tt_from_cellRanger_sc(
+    dir_names = dir_names,
+   min.transcripts = min.transcripts,
+   min.cells = min.cells,
+   high.mito.thresh = high.mito.thresh,
+   high.umi.thresh = high.umi.thresh,
+   species = species,
+   genome = genome
+  )
 }
 
 #' Normalise the counts of transcripts/genes
@@ -705,6 +783,7 @@ adjust_abundance.tbl_df = adjust_abundance.ttSc <-
 #'
 #' @param .data A `tbl` formatted as | <SAMPLE> | <TRANSCRIPT> | <COUNT> | <...> |
 #' @param .sample The name of the sample column
+#' @param .cell The name of the cell column
 #' @param .transcript The name of the transcript/gene column
 #' @param .abundance The name of the transcript/gene abundance column
 #'
@@ -731,6 +810,7 @@ adjust_abundance.tbl_df = adjust_abundance.ttSc <-
 #' counts %>%
 #'     aggregate_duplicates(
 #'     sample,
+#'     cell,
 #'     transcript,
 #'     `count`,
 #'     aggregation_function = sum
@@ -744,6 +824,7 @@ adjust_abundance.tbl_df = adjust_abundance.ttSc <-
 aggregate_duplicates <- function(.data,
                                  aggregation_function = sum,
                                  .sample = NULL,
+                                 .cell = NULL,
                                  .transcript = NULL,
                                  .abundance = NULL,
                                  shape = "long",
@@ -755,6 +836,7 @@ aggregate_duplicates <- function(.data,
 aggregate_duplicates.default <-  function(.data,
                                           aggregation_function = sum,
                                           .sample = NULL,
+                                          .cell = NULL,
                                           .transcript = NULL,
                                           .abundance = NULL,
                                           shape = "long",
@@ -774,6 +856,7 @@ aggregate_duplicates.tbl_df = aggregate_duplicates.ttSc <-
            .abundance = NULL,
            shape = "long",
            keep_integer = T)  {
+
     # Make col names
     .sample = enquo(.sample)
     .cell = enquo(.cell)

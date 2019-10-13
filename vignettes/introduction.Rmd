@@ -102,10 +102,10 @@ ttSc provide the `aggregate_duplicates` function to aggregate duplicated transcr
 counts.aggr = 
   counts %>%
   aggregate_duplicates(
-  	sample, 
-  	cell,
-  	transcript, 
-  	`count`,  
+  	.sample = sample, 
+  	.cell = cell,
+  	.transcript = transcript, 
+  	.abundance = `count`,  
   	aggregation_function = sum
   )
 
@@ -193,7 +193,7 @@ tt.norm.tSNE %>%
 
 **UMAP**
 
-```{r tsne, cache=TRUE}
+```{r UMAP, cache=TRUE}
 tt.norm.UMAP =
 	tt.norm %>%
 	reduce_dimensions(method = "UMAP"	) 
@@ -300,7 +300,6 @@ We can add cluster annotation to the MDS dimesion reduced data set and plot.
 
 ```{r plot_cluster, cache=TRUE}
  counts.norm.adj.UMAP.cluster %>%
-  annotate_clusters() %>%
 	distinct(sample, `UMAP 1`, `UMAP 2`, `cluster`) %>%
 	ggplot(aes(x=`UMAP 1`, y=`UMAP 2`, color=`cluster`)) +
   geom_point() +
@@ -318,21 +317,17 @@ counts.norm.adj.UMAP.cluster.ct =
 	counts.norm.adj.UMAP.cluster %>%
 	annotate_cell_type()
 
-counts.norm.adj.UMAP.cluster.ct %>% select(sample, contains("type:")) %>% distinct()
+counts.norm.adj.UMAP.cluster.ct %>% select(cell, `Cell type Blueprint_Encode`, everything()) 
 ```
 
 With the new annotated data frame, we can plot the distributions of cell types across samples, and compare them with the nominal cell type labels to check for the purity of isolation. On the x axis we have the cell types inferred by Cibersort, on the y axis we have the inferred proportions. The data is facetted and coloured by nominal cell types (annotation given by the researcher after FACS sorting).
 
 ```{r plot_cibersort, cache=TRUE}
 counts.norm.adj.UMAP.cluster.ct %>%
-	select(contains("type:"), everything()) %>%
-	gather(`Cell type inferred`, `proportion`, 1:22) %>%
-  distinct(sample, `Cell type`, `Cell type inferred`, proportion) %>%
-  ggplot(aes(x=`Cell type inferred`, y=proportion, fill=`Cell type`)) +
-  geom_boxplot() +
-  facet_wrap(~`Cell type`) +
-  my_theme +
-  theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5), aspect.ratio=1/5)
+distinct(sample, `UMAP 1`, `UMAP 2`, `Cell type Blueprint_Encode`) %>%
+	ggplot(aes(x=`UMAP 1`, y=`UMAP 2`, color=`Cell type Blueprint_Encode`)) +
+  geom_point() +
+  my_theme
 ```
 
 
@@ -345,7 +340,8 @@ We may want to remove redundant elements from the original data set (e.g., sampl
 
 **Approach 1**
 
-```{r drop, cache=TRUE}
+```
+{r drop, cache=TRUE}
 counts.norm.non_redundant =
 	counts.norm.MDS %>%
   drop_redundant(
@@ -358,7 +354,8 @@ counts.norm.non_redundant =
 
 We can visualise how the reduced redundancy with the reduced dimentions look like
 
-```{r plot_drop, cache=TRUE}
+```
+{r plot_drop, cache=TRUE}
 counts.norm.non_redundant %>%
 	distinct(sample, `Dim 1`, `Dim 2`, `Cell type`) %>%
 	ggplot(aes(x=`Dim 1`, y=`Dim 2`, color=`Cell type`)) +
@@ -369,7 +366,8 @@ counts.norm.non_redundant %>%
 
 **Approach 2**
 
-```{r drop2, cache=TRUE}
+```
+{r drop2, cache=TRUE}
 counts.norm.non_redundant =
 	counts.norm.MDS %>%
   drop_redundant(
@@ -383,7 +381,8 @@ counts.norm.non_redundant =
 
 We can visualise MDS reduced dimensions of the samples with the closest pair removed.
 
-```{r plot_drop2, cache=TRUE}
+```
+{r plot_drop2, cache=TRUE}
 counts.norm.non_redundant %>%
 	distinct(sample, `Dim 1`, `Dim 2`, `Cell type`) %>%
 	ggplot(aes(x=`Dim 1`, y=`Dim 2`, color=`Cell type`)) +
@@ -401,22 +400,10 @@ The above wrapper streamline the most common processing of bulk RNA sequencing d
 We can calculate gene counts (using FeatureCounts; Liao Y et al., 10.1093/nar/gkz114) from a list of BAM/SAM files and format them into a tidy structure (similar to counts).
 
 ```{r eval=FALSE}
-counts = bam_sam_to_featureCounts_tibble(
-	file_names, 
-	genome = "hg38",
-	isPairedEnd = T,
-	requireBothEndsMapped = T,
-	checkFragLength = F,
-	useMetaFeatures = T
+counts = ttSc_cell_ranger(
+	dir_names = "=filtered_feature_bc_matrix/",
+	species = "Human"
 )
-```
-
-## From ensembl IDs to gene symbol IDs
-
-We can add gene symbols from ensembl identifiers. This is useful since different resources use ensembl IDs while others use gene symbol IDs.
-
-```{r ensembl, cache=TRUE}
-counts_ensembl %>% annotate_symbol(ens)
 ```
 
 # ADD versus GET modes
@@ -424,20 +411,16 @@ counts_ensembl %>% annotate_symbol(ens)
 Every function takes this structure as input, and outputs either (i) the new information joint to the original input data frame (default), or (ii) just the new information, setting action="add" or action="get" respectively. For example, from this data set
 
 ```{r, cache=TRUE}
-  counts.norm 
+  tt.norm 
 ```
 
 **action="add"** (Default)
 We can add the MDS dimensions to the original data set
 
 ```{r, cache=TRUE}
-  counts.norm %>%
+  tt.norm %>%
     reduce_dimensions(
-    	.abundance = `count normalised`, 
-    	method="MDS" , 
-    	.element = sample, 
-    	.feature = transcript, 
-    	.dims = 3, 
+    	method="PCA" ,
     	action="add"
     )
 ```
@@ -446,13 +429,9 @@ We can add the MDS dimensions to the original data set
 We can get just the MDS dimensions relative to each sample
 
 ```{r, cache=TRUE}
-  counts.norm %>%
-    reduce_dimensions(
-    	.abundance = `count normalised`, 
-    	method="MDS" , 
-    	.element = sample, 
-    	.feature = transcript, 
-    	.dims = 3, 
+  tt.norm %>%
+     reduce_dimensions(
+    	method="PCA" ,
     	action="get"
     )
 ```

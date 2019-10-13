@@ -1800,7 +1800,10 @@ get_adjusted_counts_for_unwanted_variation_sc = function(.data,
 		install.packages("benchmarkme")
 	}
 
-	available_Gb_ram =  benchmarkme::get_ram() / 10 * 9
+	if(Sys.info()[['sysname']] == "Windows")
+		available_Gb_ram =
+			as.numeric(gsub("\r","",gsub("FreePhysicalMemory=","",system('wmic OS get FreePhysicalMemory /Value',intern=TRUE)[3])))/1024/1024
+	else 	available_Gb_ram =  benchmarkme::get_ram() / 10 * 9
 	options(future.globals.maxSize = available_Gb_ram * 1000 * 1024 ^ 2)
 
 	# Update on tibble
