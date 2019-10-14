@@ -1104,7 +1104,7 @@ add_mitochndrion_transcription_abundance_sc = function(.data, .cell) {
 #' @return A tt object
 #'
 #' @export
-get_normalised_counts_sc = function(.data) {
+get_normalised_counts_sc = function(.data, verbose = TRUE) {
 	# Cell column name
 	.cell = .data %>% attr("parameters") %>% `[[` (1) %$% .cell
 	.sample = .data %>% attr("parameters") %>% `[[` (1) %$% .sample
@@ -1120,7 +1120,7 @@ get_normalised_counts_sc = function(.data) {
 		.data %>%
 		attr("seurat") %>%
 		map(~ .x %>%	SCTransform(
-			verbose = TRUE,
+			verbose = verbose,
 			new.assay.name = new_assay_name
 		))
 
@@ -1157,7 +1157,7 @@ get_normalised_counts_sc = function(.data) {
 #' @return A tt object
 #'
 #' @export
-add_normalised_counts_sc = function(.data) {
+add_normalised_counts_sc = function(.data, verbose = TRUE) {
 	# Cell column name
 	.cell = .data %>% attr("parameters") %>% `[[` (1) %$% .cell
 
@@ -1166,7 +1166,7 @@ add_normalised_counts_sc = function(.data) {
 
 	.data.normalised =
 		.data %>%
-		get_normalised_counts_sc()
+		get_normalised_counts_sc(verbose = verbose)
 
 	.data %>%
 		dplyr::left_join(.data.normalised,  by = quo_name(.cell)) %>%
@@ -1792,7 +1792,8 @@ do_integration_seurat = function(seurat_list) {
 get_adjusted_counts_for_unwanted_variation_sc = function(.data,
 																												 .formula,
 																												 do.scale = F,
-																												 do.center = F) {
+																												 do.center = F,
+																												 verbose = T) {
 
 	# Check if package is installed, otherwise install
 	if ("benchmarkme" %in% rownames(installed.packages()) == FALSE) {
@@ -1846,7 +1847,7 @@ get_adjusted_counts_for_unwanted_variation_sc = function(.data,
 		map(~
 					.x %>%
 					SCTransform(
-						verbose = TRUE,
+						verbose = verbose,
 						vars.to.regress = variables_to_regress_no_sample
 					)) %>%
 
@@ -1893,7 +1894,8 @@ get_adjusted_counts_for_unwanted_variation_sc = function(.data,
 add_adjusted_counts_for_unwanted_variation_sc = function(.data,
 																												 .formula,
 																												 do.scale = F,
-																												 do.center = F) {
+																												 do.center = F,
+																												 verbose = T) {
 	# Update on tibble
 	.data = .data %>% update_object_sc
 
@@ -1905,7 +1907,8 @@ add_adjusted_counts_for_unwanted_variation_sc = function(.data,
 		.data %>%
 		get_adjusted_counts_for_unwanted_variation_sc(.formula = .formula,
 																									do.scale = do.scale,
-																									do.center = do.center)
+																									do.center = do.center,
+																									verbose = verbose)
 
 	# Merge
 	.data %>%

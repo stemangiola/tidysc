@@ -125,6 +125,18 @@ tt =
     .abundance = `count`,
     species = "Human"
   )
+
+tt
+```
+
+By default, the trabscript abundance is not shown (in order to save memory), but can be extracted for plotting or further analysis
+
+```{r extract, cache=TRUE}
+tt %>%
+  extract_abundance( ) %>%
+	select(sample, cell, transcript, count_RNA, everything())
+
+tt
 ```
 
 # Normalise `counts`
@@ -133,11 +145,11 @@ We may want to calculate the normalised counts for library size (e.g., with TMM 
 
 ```{r normalise, cache=TRUE}
 tt.norm =  tt %>% 
-	normalise_abundance()
+	normalise_abundance(verbose = F)
 
 tt.norm %>% 
 	extract_abundance(all=T) %>%
-	select(sample, cell, `count_RNA`, `count_normalised`, everything())
+	select(sample, cell, transcript, `count_RNA`, `count_normalised`, everything())
 ```
 
 We can easily plot the normalised density to check the normalisation outcome. On the x axis we have the log scaled counts, on the y axes we have the density, data is grouped by sample and coloured by cell type. 
@@ -257,9 +269,6 @@ We may want to test for differential transcription between sample-wise factors o
 counts %>%
 	test_differential_transcription(
       ~ condition,
-      .sample = sample,
-      .transcript = transcript,
-      .abundance = `count`,
       action="get")
 ```
 
@@ -270,7 +279,7 @@ We may want to adjust `counts` for (known) unwanted variation. `adjust_abundance
 ```{r adjust, cache=TRUE}
 counts.norm.adj =
 	tt.norm %>%
-	  adjust_abundance( 	~ sample )
+	  adjust_abundance( 	~ sample, verbose=F )
 
 counts.norm.adj.UMAP = 
 	counts.norm.adj %>%

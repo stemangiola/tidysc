@@ -5,8 +5,8 @@
 \title{Aggregates multiple counts from the same samples (e.g., from isoforms), concatenates other character columns, and averages other numeric columns}
 \usage{
 aggregate_duplicates(.data, aggregation_function = sum, .sample = NULL,
-  .transcript = NULL, .abundance = NULL, shape = "long",
-  keep_integer = T)
+  .cell = NULL, .transcript = NULL, .abundance = NULL,
+  shape = "long", keep_integer = T)
 }
 \arguments{
 \item{.data}{A `tbl` formatted as | <SAMPLE> | <TRANSCRIPT> | <COUNT> | <...> |}
@@ -14,6 +14,8 @@ aggregate_duplicates(.data, aggregation_function = sum, .sample = NULL,
 \item{aggregation_function}{A function for counts aggregation (e.g., sum,  median, or mean)}
 
 \item{.sample}{The name of the sample column}
+
+\item{.cell}{The name of the cell column}
 
 \item{.transcript}{The name of the transcript/gene column}
 
@@ -43,6 +45,7 @@ For example, we often have to convert ensembl symbols to gene/transcript symbol,
 counts \%>\%
     aggregate_duplicates(
     sample,
+    cell,
     transcript,
     `count`,
     aggregation_function = sum

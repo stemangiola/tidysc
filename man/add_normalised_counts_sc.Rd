@@ -4,7 +4,7 @@
 \alias{add_normalised_counts_sc}
 \title{Add normalised counts}
 \usage{
-add_normalised_counts_sc(.data)
+add_normalised_counts_sc(.data, verbose = TRUE)
 }
 \arguments{
 \item{.data}{A tt object}

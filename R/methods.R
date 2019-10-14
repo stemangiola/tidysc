@@ -212,11 +212,13 @@ ttSc_cell_ranger.tbl_df <- function(dir_names,
 #'
 #' @export
 normalise_abundance <- function(.data,
+                                verbose = TRUE,
                                 action = "add") {
   UseMethod("normalise_abundance", .data)
 }
 #' @export
 normalise_abundance.default <-  function(.data,
+                                         verbose = TRUE,
                                          action = "add")
 {
   print("This function cannot be applied to this object")
@@ -224,12 +226,13 @@ normalise_abundance.default <-  function(.data,
 #' @export
 normalise_abundance.tbl_df = normalise_abundance.ttSc <-
   function(.data,
+           verbose = TRUE,
            action = "add")
   {
     if (action == "add")
-      add_normalised_counts_sc(.data)
+      add_normalised_counts_sc(.data, verbose = verbose)
     else if (action == "get")
-      get_normalised_counts_sc(.data)
+      get_normalised_counts_sc(.data, verbose = verbose)
     else
       stop(
         "action must be either \"add\" for adding this information to your data frame or \"get\" to just get the information"
@@ -728,6 +731,7 @@ adjust_abundance <- function(.data,
                              .formula,
                              do.scale = F,
                              do.center = F,
+                             verbose = T,
                              action = "add") {
   UseMethod("adjust_abundance", .data)
 }
@@ -736,6 +740,7 @@ adjust_abundance.default <-  function(.data,
                                       .formula,
                                       do.scale = F,
                                       do.center = F,
+                                      verbose = T,
                                       action = "add")
 {
   print("This function cannot be applied to this object")
@@ -746,6 +751,7 @@ adjust_abundance.tbl_df = adjust_abundance.ttSc <-
            .formula,
            do.scale = F,
            do.center = F,
+           verbose = T,
            action = "add")
   {
 
@@ -755,14 +761,16 @@ adjust_abundance.tbl_df = adjust_abundance.ttSc <-
         .data = .data,
         .formula = .formula,
         do.scale = do.scale,
-        do.center = do.center
+        do.center = do.center,
+        verbose = verbose
       )
     else if (action == "get")
       get_adjusted_counts_for_unwanted_variation_sc(
         .data = .data,
         .formula = .formula,
         do.scale = do.scale,
-        do.center = do.center
+        do.center = do.center,
+        verbose = verbose
       )
     else
       stop(

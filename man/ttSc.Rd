@@ -3,12 +3,27 @@
 \name{ttSc}
 \alias{ttSc}
 \alias{ttSc_long}
+\alias{ttSc_cell_ranger}
 \title{Creates a `tt` object from a `tbl``}
 \usage{
 ttSc_long(.data, .sample, .cell, .transcript, .abundance, species,
   min.transcripts = 400, min.cells = 5, ...)
+
+ttSc_cell_ranger(dir_names, min.transcripts = 400, min.cells = 5,
+  high.mito.thresh = 0.08, high.umi.thresh = 10000, species,
+  genome = ifelse(species == "Human", "hg38", "mm10"))
 }
 \arguments{
+\item{.data}{A `tbl` formatted as | <SAMPLE> | <TRANSCRIPT> | <COUNT> | <...> |}
+
+\item{.sample}{The name of the sample column}
+
+\item{.cell}{The name of the cell column}
+
+\item{.transcript}{The name of the transcript/gene column}
+
+\item{.abundance}{The name of the transcript/gene abundance column}
+
 \item{.data}{A `tbl` formatted as | <SAMPLE> | <TRANSCRIPT> | <COUNT> | <...> |}
 
 \item{.sample}{The name of the sample column}
@@ -19,17 +34,38 @@ ttSc_long(.data, .sample, .cell, .transcript, .abundance, species,
 }
 \value{
 A `ttSc` object
+
+A `ttSc` object
 }
 \description{
-create_tt() creates a `tt` object from a `tbl` formatted as | <SAMPLE> | <TRANSCRIPT> | <COUNT> | <...> |
+ttSc_long() creates a `tt` object from a `tbl` formatted as | <SAMPLE> | <TRANSCRIPT> | <COUNT> | <...> |
+
+ttSc_cell_ranger() creates a `tt` object from a `tbl` formatted as | <SAMPLE> | <TRANSCRIPT> | <COUNT> | <...> |
 }
 \details{
 This function created a ttSc object and is useful if you want
 to avoid to specify .sample, .transcript and .abundance arguments all the times.
 The ttSc object have an attribute called parameters where these three
 arguments are stored as metadata. They can be extracted as attr(<object>, "parameters").
+
+This function created a ttSc object and is useful if you want
+to avoid to specify .sample, .transcript and .abundance arguments all the times.
+The ttSc object have an attribute called parameters where these three
+arguments are stored as metadata. They can be extracted as attr(<object>, "parameters").
 }
 \examples{
+\donttest{
+
+
+
+my_tt =
+    ttSc::counts \%>\%
+    ttSc(sample, transcript, counts)
+
+class(my_tt)
+
+}
+
 \donttest{
 
 

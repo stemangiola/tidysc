@@ -5,7 +5,7 @@
 \title{Adjust transcript abundance for unwanted variation}
 \usage{
 adjust_abundance(.data, .formula, do.scale = F, do.center = F,
-  action = "add")
+  verbose = T, action = "add")
 }
 \arguments{
 \item{.data}{A `tbl` formatted as | <SAMPLE> | <TRANSCRIPT> | <COUNT> | <...> |}
