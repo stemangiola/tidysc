@@ -117,7 +117,7 @@ counts.aggr
 
 ```{r create, cache=TRUE}
 tt =
-  create_tt_from_tibble_sc(
+  ttSc_long(
     counts.aggr,
     .sample = sample,
     .cell = cell,
@@ -141,11 +141,10 @@ tt
 
 # Normalise `counts`
 
-We may want to calculate the normalised counts for library size (e.g., with TMM algorithm, Robinson and Oshlack doi.org/10.1186/gb-2010-11-3-r25). `normalise_abundance` takes a tibble, column names (as symbols; for `sample`, `transcript` and `count`) and a method as arguments and returns a tibble with additional columns with normalised data as `<NAME OF COUNT COLUMN> normalised`.
+We may want to calculate the normalised counts for library size (e.g., with TMM algorithm, Robinson and Oshlack doi.org/10.1186/gb-2010-11-3-r25). `scale_abundance` takes a tibble, column names (as symbols; for `sample`, `transcript` and `count`) and a method as arguments and returns a tibble with additional columns with normalised data as `<NAME OF COUNT COLUMN> normalised`.
 
 ```{r normalise, cache=TRUE}
-tt.norm =  tt %>% 
-	normalise_abundance(verbose = F)
+tt.norm =  tt %>% scale_abundance(verbose = F)
 
 tt.norm %>% 
 	extract_abundance(all=T) %>%
@@ -262,12 +261,12 @@ tt.norm.UMAP.rotated %>%
 
 # Annotate `differential transcription`
 
-We may want to test for differential transcription between sample-wise factors of interest (e.g., with edgeR). `test_differential_transcription` takes a tibble, column names (as symbols; for `sample`, `transcript` and `count`) and a formula representing the desired linear model as arguments and returns a tibble with additional columns for the statistics from the hypothesis test (e.g.,  log fold change, p-value and false discovery rate). 
+We may want to test for differential transcription between sample-wise factors of interest (e.g., with edgeR). `test_differential_abundance` takes a tibble, column names (as symbols; for `sample`, `transcript` and `count`) and a formula representing the desired linear model as arguments and returns a tibble with additional columns for the statistics from the hypothesis test (e.g.,  log fold change, p-value and false discovery rate). 
 
 ```
 {r de, cache=TRUE}
 counts %>%
-	test_differential_transcription(
+	test_differential_abundance(
       ~ condition,
       action="get")
 ```
@@ -293,14 +292,14 @@ counts.norm.adj.UMAP %>%
 
 # Annotate `clusters` 
 
-We may want to cluster our data (e.g., using SNN sample-wise). `annotate_clusters` takes as arguments a tibble, column names (as symbols; for `sample`, `transcript` and `count`) and returns a tibble with additional columns for the cluster annotation. At the moment only SNN clustering is supported, the plan is to introduce more clustering methods.
+We may want to cluster our data (e.g., using SNN sample-wise). `cluster_elements` takes as arguments a tibble, column names (as symbols; for `sample`, `transcript` and `count`) and returns a tibble with additional columns for the cluster annotation. At the moment only SNN clustering is supported, the plan is to introduce more clustering methods.
 
 **SNN**
 
 ```{r cluster, cache=TRUE}
 counts.norm.adj.UMAP.cluster = 
 	counts.norm.adj.UMAP %>%
-  annotate_clusters()
+  cluster_elements()
 
 counts.norm.adj.UMAP.cluster
 ```
@@ -318,13 +317,13 @@ We can add cluster annotation to the MDS dimesion reduced data set and plot.
 
 # Annotate `Cell type composition`
 
-We may want to infer the cell type composition of our samples (with the algorithm Cibersort; Newman et al., 10.1038/nmeth.3337). `annotate_cell_type` takes as arguments a tibble, column names (as symbols; for `sample`, `transcript` and `count`) and returns a tibble with additional columns for the adjusted  cell type proportions.
+We may want to infer the cell type composition of our samples (with the algorithm Cibersort; Newman et al., 10.1038/nmeth.3337). `deconvolve_cellularity` takes as arguments a tibble, column names (as symbols; for `sample`, `transcript` and `count`) and returns a tibble with additional columns for the adjusted  cell type proportions.
 
 **columns truncated**
 ```{r cibersort, cache=TRUE}
 counts.norm.adj.UMAP.cluster.ct =
 	counts.norm.adj.UMAP.cluster %>%
-	annotate_cell_type()
+	deconvolve_cellularity()
 
 counts.norm.adj.UMAP.cluster.ct %>% select(cell, `Cell type Blueprint_Encode`, everything()) 
 ```
@@ -342,7 +341,7 @@ distinct(sample, `UMAP 1`, `UMAP 2`, `Cell type Blueprint_Encode`) %>%
 
 # Drop `redundant`
 
-We may want to remove redundant elements from the original data set (e.g., samples or transcripts), for example if we want to define cell-type specific signatures with low sample redundancy. `drop_redundant` takes as arguments a tibble, column names (as symbols; for `sample`, `transcript` and `count`) and returns a tibble dropped recundant elements (e.g., samples). Two redundancy estimation approaches are supported: 
+We may want to remove redundant elements from the original data set (e.g., samples or transcripts), for example if we want to define cell-type specific signatures with low sample redundancy. `remove_redundancy` takes as arguments a tibble, column names (as symbols; for `sample`, `transcript` and `count`) and returns a tibble dropped recundant elements (e.g., samples). Two redundancy estimation approaches are supported: 
 
 + removal of highly correlated clusters of elements (keeping a representative) with method="correlation"
 + removal of most proximal element pairs in a reduced dimensional space.
@@ -353,7 +352,7 @@ We may want to remove redundant elements from the original data set (e.g., sampl
 {r drop, cache=TRUE}
 counts.norm.non_redundant =
 	counts.norm.MDS %>%
-  drop_redundant(
+  remove_redundancy(
   	method = "correlation",
   	.element = sample,
   	.feature = transcript,
@@ -379,7 +378,7 @@ counts.norm.non_redundant %>%
 {r drop2, cache=TRUE}
 counts.norm.non_redundant =
 	counts.norm.MDS %>%
-  drop_redundant(
+  remove_redundancy(
   	method = "reduced_dimensions",
   	.element = sample,
   	.feature = transcript,

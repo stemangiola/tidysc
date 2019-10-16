@@ -3,3 +3,5 @@
 .RData
 .Ruserdata
 ttSc.Rproj
+README_cache*
+vignettes/introduction_cache*

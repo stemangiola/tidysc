@@ -104,7 +104,7 @@ counts.aggr
 
 ``` r
 tt =
-  create_tt_from_tibble_sc(
+  ttSc_long(
     counts.aggr,
     .sample = sample,
     .cell = cell,
@@ -127,17 +127,17 @@ tt
     ## # A tibble: 200 x 12
     ##    sample cell  `count total` `gene count` tech  celltype
     ##    <fct>  <fct>         <dbl>        <int> <fct> <fct>   
-    ##  1 celseq D101~          8759         1837 cels~ gamma   
-    ##  2 celseq D101~          3588         1102 cels~ gamma   
-    ##  3 celseq D101~         11721         1942 cels~ acinar  
-    ##  4 celseq D101~         14516         2073 cels~ acinar  
-    ##  5 celseq D101~         17162         2272 cels~ acinar  
-    ##  6 celseq D101~         25440         1936 cels~ acinar  
-    ##  7 celseq D101~         11275         2070 cels~ acinar  
-    ##  8 celseq D101~         17788         2285 cels~ acinar  
-    ##  9 celseq D101~          4227         1303 cels~ gamma   
-    ## 10 celseq D102~          6926         1547 cels~ acinar  
-    ## # ... with 190 more rows, and 6 more variables:
+    ##  1 celseq D101…          8759         1837 cels… gamma   
+    ##  2 celseq D101…          3588         1102 cels… gamma   
+    ##  3 celseq D101…         11721         1942 cels… acinar  
+    ##  4 celseq D101…         14516         2073 cels… acinar  
+    ##  5 celseq D101…         17162         2272 cels… acinar  
+    ##  6 celseq D101…         25440         1936 cels… acinar  
+    ##  7 celseq D101…         11275         2070 cels… acinar  
+    ##  8 celseq D101…         17788         2285 cels… acinar  
+    ##  9 celseq D101…          4227         1303 cels… gamma   
+    ## 10 celseq D102…          6926         1547 cels… acinar  
+    ## # … with 190 more rows, and 6 more variables:
     ## #   number.of.merged.transcripts <int>, mito.fraction <dbl>,
     ## #   mito.tot <int>, S.Score <dbl>, G2M.Score <dbl>, Phase <fct>
 
@@ -192,14 +192,13 @@ tt
 
 We may want to calculate the normalised counts for library size (e.g.,
 with TMM algorithm, Robinson and Oshlack
-doi.org/10.1186/gb-2010-11-3-r25). `normalise_abundance` takes a tibble,
+doi.org/10.1186/gb-2010-11-3-r25). `scale_abundance` takes a tibble,
 column names (as symbols; for `sample`, `transcript` and `count`) and a
 method as arguments and returns a tibble with additional columns with
 normalised data as `<NAME OF COUNT COLUMN> normalised`.
 
 ``` r
-tt.norm =  tt %>% 
-    normalise_abundance(verbose = F)
+tt.norm =  tt %>% scale_abundance(verbose = F)
 
 tt.norm %>% 
     extract_abundance(all=T) %>%
@@ -209,17 +208,17 @@ tt.norm %>%
     ## # A tibble: 545,800 x 17
     ##    sample cell  transcript count_RNA count_normalised `count total`
     ##    <fct>  <fct> <fct>          <dbl>            <dbl>         <dbl>
-    ##  1 celseq D101~ A1CF               0            0              8759
-    ##  2 celseq D101~ AAK1               2            1.10           8759
-    ##  3 celseq D101~ AAMP               1            0.693          8759
-    ##  4 celseq D101~ ABCA5              0            0              8759
-    ##  5 celseq D101~ ABCB1              0            0              8759
-    ##  6 celseq D101~ ABCC8              1            0.693          8759
-    ##  7 celseq D101~ ABCC9              2            1.10           8759
-    ##  8 celseq D101~ ABCD3              0            0              8759
-    ##  9 celseq D101~ ABCF1              0            0              8759
-    ## 10 celseq D101~ ABHD11             0            0              8759
-    ## # ... with 545,790 more rows, and 11 more variables: `gene count` <int>,
+    ##  1 celseq D101… A1CF               0            0              8759
+    ##  2 celseq D101… AAK1               2            1.10           8759
+    ##  3 celseq D101… AAMP               1            0.693          8759
+    ##  4 celseq D101… ABCA5              0            0              8759
+    ##  5 celseq D101… ABCB1              0            0              8759
+    ##  6 celseq D101… ABCC8              1            0.693          8759
+    ##  7 celseq D101… ABCC9              2            1.10           8759
+    ##  8 celseq D101… ABCD3              0            0              8759
+    ##  9 celseq D101… ABCF1              0            0              8759
+    ## 10 celseq D101… ABHD11             0            0              8759
+    ## # … with 545,790 more rows, and 11 more variables: `gene count` <int>,
     ## #   tech <fct>, celltype <fct>, number.of.merged.transcripts <int>,
     ## #   mito.fraction <dbl>, mito.tot <int>, S.Score <dbl>, G2M.Score <dbl>,
     ## #   Phase <fct>, nCount_normalised <dbl>, nFeature_normalised <int>
@@ -240,6 +239,10 @@ tt.norm %>%
 ```
 
 ![](README_files/figure-gfm/plot_normalise-1.png)<!-- -->
+
+# Reduce `dimensions`
+
+**PCA**
 
 ``` r
 tt.norm.PCA =
@@ -396,16 +399,16 @@ dimensions rotated of 45 degrees, data is coloured by cell type.
 # Annotate `differential transcription`
 
 We may want to test for differential transcription between sample-wise
-factors of interest (e.g., with edgeR).
-`test_differential_transcription` takes a tibble, column names (as
-symbols; for `sample`, `transcript` and `count`) and a formula
-representing the desired linear model as arguments and returns a tibble
-with additional columns for the statistics from the hypothesis test
-(e.g., log fold change, p-value and false discovery rate).
+factors of interest (e.g., with edgeR). `test_differential_abundance`
+takes a tibble, column names (as symbols; for `sample`, `transcript` and
+`count`) and a formula representing the desired linear model as
+arguments and returns a tibble with additional columns for the
+statistics from the hypothesis test (e.g., log fold change, p-value and
+false discovery rate).
 
     {r de, cache=TRUE}
     counts %>%
-        test_differential_transcription(
+        test_differential_abundance(
           ~ condition,
           action="get")
 
@@ -440,7 +443,7 @@ counts.norm.adj.UMAP %>%
 # Annotate `clusters`
 
 We may want to cluster our data (e.g., using SNN sample-wise).
-`annotate_clusters` takes as arguments a tibble, column names (as
+`cluster_elements` takes as arguments a tibble, column names (as
 symbols; for `sample`, `transcript` and `count`) and returns a tibble
 with additional columns for the cluster annotation. At the moment only
 SNN clustering is supported, the plan is to introduce more clustering
@@ -451,7 +454,7 @@ methods.
 ``` r
 counts.norm.adj.UMAP.cluster = 
     counts.norm.adj.UMAP %>%
-  annotate_clusters()
+  cluster_elements()
 ```
 
     ## Modularity Optimizer version 1.3.0 by Ludo Waltman and Nees Jan van Eck
@@ -471,17 +474,17 @@ counts.norm.adj.UMAP.cluster
     ## # A tibble: 200 x 19
     ##    sample cell  `count total` `gene count` tech  celltype
     ##    <fct>  <fct>         <dbl>        <int> <fct> <fct>   
-    ##  1 celseq D101~          8759         1837 cels~ gamma   
-    ##  2 celseq D101~          3588         1102 cels~ gamma   
-    ##  3 celseq D101~         11721         1942 cels~ acinar  
-    ##  4 celseq D101~         14516         2073 cels~ acinar  
-    ##  5 celseq D101~         17162         2272 cels~ acinar  
-    ##  6 celseq D101~         25440         1936 cels~ acinar  
-    ##  7 celseq D101~         11275         2070 cels~ acinar  
-    ##  8 celseq D101~         17788         2285 cels~ acinar  
-    ##  9 celseq D101~          4227         1303 cels~ gamma   
-    ## 10 celseq D102~          6926         1547 cels~ acinar  
-    ## # ... with 190 more rows, and 13 more variables:
+    ##  1 celseq D101…          8759         1837 cels… gamma   
+    ##  2 celseq D101…          3588         1102 cels… gamma   
+    ##  3 celseq D101…         11721         1942 cels… acinar  
+    ##  4 celseq D101…         14516         2073 cels… acinar  
+    ##  5 celseq D101…         17162         2272 cels… acinar  
+    ##  6 celseq D101…         25440         1936 cels… acinar  
+    ##  7 celseq D101…         11275         2070 cels… acinar  
+    ##  8 celseq D101…         17788         2285 cels… acinar  
+    ##  9 celseq D101…          4227         1303 cels… gamma   
+    ## 10 celseq D102…          6926         1547 cels… acinar  
+    ## # … with 190 more rows, and 13 more variables:
     ## #   number.of.merged.transcripts <int>, mito.fraction <dbl>,
     ## #   mito.tot <int>, S.Score <dbl>, G2M.Score <dbl>, Phase <fct>,
     ## #   nCount_normalised <dbl>, nFeature_normalised <int>, nCount_SCT <dbl>,
@@ -504,7 +507,7 @@ plot.
 
 We may want to infer the cell type composition of our samples (with the
 algorithm Cibersort; Newman et al., 10.1038/nmeth.3337).
-`annotate_cell_type` takes as arguments a tibble, column names (as
+`deconvolve_cellularity` takes as arguments a tibble, column names (as
 symbols; for `sample`, `transcript` and `count`) and returns a tibble
 with additional columns for the adjusted cell type proportions.
 
@@ -513,7 +516,7 @@ with additional columns for the adjusted cell type proportions.
 ``` r
 counts.norm.adj.UMAP.cluster.ct =
     counts.norm.adj.UMAP.cluster %>%
-    annotate_cell_type()
+    deconvolve_cellularity()
 ```
 
     ## [1] "Dimensions of counts data: 2729x200"
@@ -547,22 +550,22 @@ counts.norm.adj.UMAP.cluster.ct %>% select(cell, `Cell type Blueprint_Encode`, e
     ## # A tibble: 200 x 21
     ##    cell  `Cell type Blueprint_Encode` sample `count total` `gene count`
     ##    <fct> <fct>                        <fct>          <dbl>        <int>
-    ##  1 D101~ Neurons                      celseq          8759         1837
-    ##  2 D101~ Neurons                      celseq          3588         1102
-    ##  3 D101~ Adipocytes                   celseq         11721         1942
-    ##  4 D101~ Epithelial cells             celseq         14516         2073
-    ##  5 D101~ Epithelial cells             celseq         17162         2272
-    ##  6 D101~ Adipocytes                   celseq         25440         1936
-    ##  7 D101~ Epithelial cells             celseq         11275         2070
-    ##  8 D101~ Epithelial cells             celseq         17788         2285
-    ##  9 D101~ Neurons                      celseq          4227         1303
-    ## 10 D102~ Adipocytes                   celseq          6926         1547
-    ## # ... with 190 more rows, and 16 more variables: tech <fct>,
-    ## #   celltype <fct>, number.of.merged.transcripts <int>,
-    ## #   mito.fraction <dbl>, mito.tot <int>, S.Score <dbl>, G2M.Score <dbl>,
-    ## #   Phase <fct>, nCount_normalised <dbl>, nFeature_normalised <int>,
-    ## #   nCount_SCT <dbl>, nFeature_SCT <int>, `UMAP 1` <dbl>, `UMAP 2` <dbl>,
-    ## #   cluster <fct>, `Cell type HPCA` <fct>
+    ##  1 D101… Neurons                      celseq          8759         1837
+    ##  2 D101… Neurons                      celseq          3588         1102
+    ##  3 D101… Adipocytes                   celseq         11721         1942
+    ##  4 D101… Epithelial cells             celseq         14516         2073
+    ##  5 D101… Epithelial cells             celseq         17162         2272
+    ##  6 D101… Adipocytes                   celseq         25440         1936
+    ##  7 D101… Epithelial cells             celseq         11275         2070
+    ##  8 D101… Epithelial cells             celseq         17788         2285
+    ##  9 D101… Neurons                      celseq          4227         1303
+    ## 10 D102… Adipocytes                   celseq          6926         1547
+    ## # … with 190 more rows, and 16 more variables: tech <fct>, celltype <fct>,
+    ## #   number.of.merged.transcripts <int>, mito.fraction <dbl>,
+    ## #   mito.tot <int>, S.Score <dbl>, G2M.Score <dbl>, Phase <fct>,
+    ## #   nCount_normalised <dbl>, nFeature_normalised <int>, nCount_SCT <dbl>,
+    ## #   nFeature_SCT <int>, `UMAP 1` <dbl>, `UMAP 2` <dbl>, cluster <fct>,
+    ## #   `Cell type HPCA` <fct>
 
 With the new annotated data frame, we can plot the distributions of cell
 types across samples, and compare them with the nominal cell type labels
@@ -586,10 +589,10 @@ distinct(sample, `UMAP 1`, `UMAP 2`, `Cell type Blueprint_Encode`) %>%
 We may want to remove redundant elements from the original data set
 (e.g., samples or transcripts), for example if we want to define
 cell-type specific signatures with low sample redundancy.
-`drop_redundant` takes as arguments a tibble, column names (as symbols;
-for `sample`, `transcript` and `count`) and returns a tibble dropped
-recundant elements (e.g., samples). Two redundancy estimation approaches
-are supported:
+`remove_redundancy` takes as arguments a tibble, column names (as
+symbols; for `sample`, `transcript` and `count`) and returns a tibble
+dropped recundant elements (e.g., samples). Two redundancy estimation
+approaches are supported:
 
   - removal of highly correlated clusters of elements (keeping a
     representative) with method=“correlation”
@@ -601,7 +604,7 @@ are supported:
     {r drop, cache=TRUE}
     counts.norm.non_redundant =
         counts.norm.MDS %>%
-      drop_redundant(
+      remove_redundancy(
         method = "correlation",
         .element = sample,
         .feature = transcript,
@@ -623,7 +626,7 @@ look like
     {r drop2, cache=TRUE}
     counts.norm.non_redundant =
         counts.norm.MDS %>%
-      drop_redundant(
+      remove_redundancy(
         method = "reduced_dimensions",
         .element = sample,
         .feature = transcript,
@@ -744,104 +747,3 @@ sample
     ##  9 D101~  -4.06  -3.95 10.5   -10.4    -2.59  0.0854 -0.819  4.89   -0.717 
     ## 10 D102~  24.2   -3.62 -0.369   1.35   -5.35 -2.91    0.662 -2.33    3.39  
     ## # ... with 190 more rows, and 1 more variable: `PC 10` <dbl>
-
-# Appendix
-
-``` r
-sessionInfo()
-```
-
-    ## R version 3.6.0 (2019-04-26)
-    ## Platform: x86_64-w64-mingw32/x64 (64-bit)
-    ## Running under: Windows 10 x64 (build 17763)
-    ## 
-    ## Matrix products: default
-    ## 
-    ## locale:
-    ## [1] LC_COLLATE=English_Australia.1252  LC_CTYPE=English_Australia.1252   
-    ## [3] LC_MONETARY=English_Australia.1252 LC_NUMERIC=C                      
-    ## [5] LC_TIME=English_Australia.1252    
-    ## 
-    ## attached base packages:
-    ## [1] stats     graphics  grDevices utils     datasets  methods   base     
-    ## 
-    ## other attached packages:
-    ##  [1] SingleR_1.0.1 ttSc_0.1.0    purrr_0.3.2   rlang_0.4.0   foreach_1.4.7
-    ##  [6] widyr_0.1.1   readr_1.3.1   ggplot2_3.2.0 tidyr_0.8.3   magrittr_1.5 
-    ## [11] dplyr_0.8.3   tibble_2.1.3  knitr_1.23   
-    ## 
-    ## loaded via a namespace (and not attached):
-    ##   [1] backports_1.1.4             plyr_1.8.4                 
-    ##   [3] igraph_1.2.4.1              lazyeval_0.2.2             
-    ##   [5] GSEABase_1.46.0             splines_3.6.0              
-    ##   [7] BiocParallel_1.17.18        listenv_0.7.0              
-    ##   [9] GenomeInfoDb_1.20.0         digest_0.6.20              
-    ##  [11] htmltools_0.3.6             fansi_0.4.0                
-    ##  [13] gdata_2.18.0                memoise_1.1.0              
-    ##  [15] doParallel_1.0.15           cluster_2.0.8              
-    ##  [17] ROCR_1.0-7                  limma_3.40.6               
-    ##  [19] globals_0.12.4              annotate_1.62.0            
-    ##  [21] RcppParallel_4.4.3          doFuture_0.8.1             
-    ##  [23] matrixStats_0.54.0          R.utils_2.9.0              
-    ##  [25] colorspace_1.4-1            blob_1.2.0                 
-    ##  [27] ggrepel_0.8.1               xfun_0.8                   
-    ##  [29] crayon_1.3.4                RCurl_1.95-4.12            
-    ##  [31] jsonlite_1.6                graph_1.62.0               
-    ##  [33] zeallot_0.1.0               survival_2.44-1.1          
-    ##  [35] zoo_1.8-6                   iterators_1.0.12           
-    ##  [37] ape_5.3                     glue_1.3.1                 
-    ##  [39] gtable_0.3.0                zlibbioc_1.30.0            
-    ##  [41] XVector_0.24.0              leiden_0.3.1               
-    ##  [43] DelayedArray_0.10.0         future.apply_1.3.0         
-    ##  [45] BiocGenerics_0.30.0         scales_1.0.0               
-    ##  [47] pheatmap_1.0.12             GGally_1.4.0               
-    ##  [49] edgeR_3.26.6                DBI_1.0.0                  
-    ##  [51] bibtex_0.4.2                Rcpp_1.0.2                 
-    ##  [53] metap_1.1                   viridisLite_0.3.0          
-    ##  [55] xtable_1.8-4                reticulate_1.13            
-    ##  [57] bit_1.1-14                  rsvd_1.0.2                 
-    ##  [59] SDMTools_1.1-221.1          stats4_3.6.0               
-    ##  [61] tsne_0.1-3                  GSVA_1.32.0                
-    ##  [63] htmlwidgets_1.3             httr_1.4.1                 
-    ##  [65] gplots_3.0.1.1              RColorBrewer_1.1-2         
-    ##  [67] Seurat_3.1.0                ica_1.0-2                  
-    ##  [69] reshape_0.8.8               pkgconfig_2.0.2            
-    ##  [71] XML_3.98-1.20               R.methodsS3_1.7.1          
-    ##  [73] uwot_0.1.3                  utf8_1.1.4                 
-    ##  [75] locfit_1.5-9.1              labeling_0.3               
-    ##  [77] tidyselect_0.2.5            reshape2_1.4.3             
-    ##  [79] later_0.8.0                 AnnotationDbi_1.46.0       
-    ##  [81] munsell_0.5.0               pbmcapply_1.5.0            
-    ##  [83] tools_3.6.0                 cli_1.1.0                  
-    ##  [85] generics_0.0.2              RSQLite_2.1.2              
-    ##  [87] broom_0.5.2                 ggridges_0.5.1             
-    ##  [89] evaluate_0.14               stringr_1.4.0              
-    ##  [91] yaml_2.2.0                  npsurv_0.4-0               
-    ##  [93] outliers_0.14               bit64_0.9-7                
-    ##  [95] fitdistrplus_1.0-14         caTools_1.17.1.2           
-    ##  [97] RANN_2.6.1                  pbapply_1.4-1              
-    ##  [99] future_1.14.0               nlme_3.1-139               
-    ## [101] mime_0.7                    R.oo_1.22.0                
-    ## [103] compiler_3.6.0              shinythemes_1.1.2          
-    ## [105] plotly_4.9.0                png_0.1-7                  
-    ## [107] lsei_1.2-0                  geneplotter_1.62.0         
-    ## [109] stringi_1.4.3               RSpectra_0.15-0            
-    ## [111] lattice_0.20-38             Matrix_1.2-17              
-    ## [113] vctrs_0.2.0                 furrr_0.1.0                
-    ## [115] pillar_1.4.2                Rdpack_0.11-0              
-    ## [117] lmtest_0.9-37               RcppAnnoy_0.0.12           
-    ## [119] data.table_1.12.2           cowplot_1.0.0              
-    ## [121] bitops_1.0-6                irlba_2.3.3                
-    ## [123] gbRd_0.4-11                 GenomicRanges_1.36.0       
-    ## [125] httpuv_1.5.1                R6_2.4.0                   
-    ## [127] promises_1.0.1              KernSmooth_2.23-15         
-    ## [129] gridExtra_2.3               IRanges_2.18.1             
-    ## [131] codetools_0.2-16            MASS_7.3-51.4              
-    ## [133] gtools_3.8.1                assertthat_0.2.1           
-    ## [135] SummarizedExperiment_1.14.1 withr_2.1.2                
-    ## [137] sctransform_0.2.0           GenomeInfoDbData_1.2.1     
-    ## [139] S4Vectors_0.22.0            parallel_3.6.0             
-    ## [141] hms_0.5.0                   grid_3.6.0                 
-    ## [143] rmarkdown_1.14              Rtsne_0.15                 
-    ## [145] singscore_1.4.0             Biobase_2.44.0             
-    ## [147] shiny_1.3.2

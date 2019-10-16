@@ -35,6 +35,7 @@
 #'
 #' }
 #'
+#' @export
 ttSc_long <- function(.data,
                       .sample,
                       .cell,
@@ -91,6 +92,94 @@ ttSc_long.tbl_df <- function(.data,
   )
 
 }
+
+#' Creates a `tt` object from a `tbl``
+#'
+#' @description ttSc_wide() creates a `tt` object from a `tbl` formatted as | <SAMPLE> | <TRANSCRIPT> | <COUNT> | <...> |
+#'
+#' @importFrom rlang enquo
+#' @importFrom magrittr "%>%"
+#'
+#' @name ttSc
+#' @rdname ttSc
+#'
+#' @param .data A `tbl` formatted as | <SAMPLE> | <TRANSCRIPT> | <COUNT> | <...> |
+#' @param .sample The name of the sample column
+#' @param .cell The name of the cell column
+#' @param .transcript The name of the transcript/gene column
+#' @param .abundance The name of the transcript/gene abundance column
+#'
+#' @details This function created a ttSc object and is useful if you want
+#' to avoid to specify .sample, .transcript and .abundance arguments all the times.
+#' The ttSc object have an attribute called parameters where these three
+#' arguments are stored as metadata. They can be extracted as attr(<object>, "parameters").
+#'
+#' @return A `ttSc` object
+#'
+#'
+#' @examples
+#' \donttest{
+#'
+#'
+#'
+#' my_tt =
+#'     ttSc::counts %>%
+#'     ttSc(sample, transcript, counts)
+#'
+#' class(my_tt)
+#'
+#' }
+#'
+#' @export
+ttSc_wide <- function(.data,
+                      .sample,
+                      .cell,
+                      .transcript_position,
+                      species,
+                      min.transcripts = 400,
+                      min.cells = 5,
+                      ...) {
+  UseMethod("ttSc_wide", .data)
+}
+#' @export
+ttSc_wide.default <- function(.data,
+                              .sample,
+                              .cell,
+                              .transcript_position,
+                              species,
+                              min.transcripts = 400,
+                              min.cells = 5,
+                              ...)
+{
+  print("This function cannot be applied to this object")
+}
+#' @export
+ttSc_wide.tbl_df <- function(.data,
+                             .sample,
+                             .cell,
+                             .transcript_position,
+                             species,
+                             min.transcripts = 400,
+                             min.cells = 5,
+                             ...)
+{
+  # Make col names
+  .sample = enquo(.sample)
+  .cell = enquo(.cell)
+
+  create_tt_from_tibble_wide_sc(
+    .data =.data,
+    .sample = !!.sample,
+    .cell = !!.cell,
+    .transcript_position = .transcript_position,
+    species = species,
+    min.transcripts = min.transcripts,
+    min.cells = min.cells,
+    genome = ifelse(species == "Human", "hg38", "mm10"),
+    ...)
+
+}
+
 
 #' Creates a `tt` object from a `tbl``
 #'
@@ -171,13 +260,13 @@ ttSc_cell_ranger.tbl_df <- function(dir_names,
 
 #' Normalise the counts of transcripts/genes
 #'
-#' @description normalise_abundance() takes as imput a `tbl` formatted as | <SAMPLE> | <TRANSCRIPT> | <COUNT> | <...> | and normalises the data for the library size (e.g., with TMM algorithm, Robinson and Oshlack doi.org/10.1186/gb-2010-11-3-r25).
+#' @description scale_abundance() takes as imput a `tbl` formatted as | <SAMPLE> | <TRANSCRIPT> | <COUNT> | <...> | and normalises the data for the library size (e.g., with TMM algorithm, Robinson and Oshlack doi.org/10.1186/gb-2010-11-3-r25).
 #'
 #' @importFrom rlang enquo
 #' @importFrom magrittr "%>%"
 #'
-#' @name normalise_abundance
-#' @rdname normalise_abundance
+#' @name scale_abundance
+#' @rdname scale_abundance
 #'
 #' @param .data A `tbl` formatted as | <SAMPLE> | <TRANSCRIPT> | <COUNT> | <...> |
 #' @param .sample The name of the sample column
@@ -205,26 +294,26 @@ ttSc_cell_ranger.tbl_df <- function(dir_names,
 #'
 #'
 #' counts %>%
-#'     normalise_abundance(sample, transcript, `count`)
+#'     scale_abundance(sample, transcript, `count`)
 #'
 #'
 #'}
 #'
 #' @export
-normalise_abundance <- function(.data,
+scale_abundance <- function(.data,
                                 verbose = TRUE,
                                 action = "add") {
-  UseMethod("normalise_abundance", .data)
+  UseMethod("scale_abundance", .data)
 }
 #' @export
-normalise_abundance.default <-  function(.data,
+scale_abundance.default <-  function(.data,
                                          verbose = TRUE,
                                          action = "add")
 {
   print("This function cannot be applied to this object")
 }
 #' @export
-normalise_abundance.tbl_df = normalise_abundance.ttSc <-
+scale_abundance.tbl_df = scale_abundance.ttSc <-
   function(.data,
            verbose = TRUE,
            action = "add")
@@ -242,13 +331,13 @@ normalise_abundance.tbl_df = normalise_abundance.ttSc <-
 
 #' Get clusters of elements (e.g., samples or transcripts)
 #'
-#' @description annotate_clusters() takes as imput a `tbl` formatted as | <SAMPLE> | <TRANSCRIPT> | <COUNT> | <...> | and identify clusters in the data.
+#' @description cluster_elements() takes as imput a `tbl` formatted as | <SAMPLE> | <TRANSCRIPT> | <COUNT> | <...> | and identify clusters in the data.
 #'
 #' @importFrom rlang enquo
 #' @importFrom magrittr "%>%"
 #'
-#' @name annotate_clusters
-#' @rdname annotate_clusters
+#' @name cluster_elements
+#' @rdname cluster_elements
 #'
 #' @param .data A `tbl` formatted as | <SAMPLE> | <TRANSCRIPT> | <COUNT> | <...> |
 #' @param .element The name of the element column (normally samples).
@@ -274,26 +363,26 @@ normalise_abundance.tbl_df = normalise_abundance.ttSc <-
 #'
 #'
 #' counts %>%
-#'     annotate_clusters(sample, transcript, count,	centers = 2)
+#'     cluster_elements(sample, transcript, count,	centers = 2)
 #'
 #'     }
 #'
 #' @export
 #'
-annotate_clusters <- function(.data,
+cluster_elements <- function(.data,
                               action = "add") {
-  UseMethod("annotate_clusters", .data)
+  UseMethod("cluster_elements", .data)
 }
 
 #' @export
-annotate_clusters.default <-  function(.data,
+cluster_elements.default <-  function(.data,
                                        action = "add")
 {
   print("This function cannot be applied to this object")
 }
 
 #' @export
-annotate_clusters.ttSc <-  function(.data,
+cluster_elements.ttSc <-  function(.data,
                                     action = "add")
 {
   if (action == "add")
@@ -551,13 +640,13 @@ rotate_dimensions.tbl_df = rotate_dimensions.ttSc <-
 
 #' Drop redundant elements (e.g., samples) for which feature (e.g., transcript/gene) aboundances are correlated
 #'
-#' @description drop_redundant() takes as imput a `tbl` formatted as | <SAMPLE> | <TRANSCRIPT> | <COUNT> | <...> | for correlation method or | <DIMENSION 1> | <DIMENSION 2> | <...> | for reduced_dimensions method, and returns a `tbl` with dropped elements (e.g., samples).
+#' @description remove_redundancy() takes as imput a `tbl` formatted as | <SAMPLE> | <TRANSCRIPT> | <COUNT> | <...> | for correlation method or | <DIMENSION 1> | <DIMENSION 2> | <...> | for reduced_dimensions method, and returns a `tbl` with dropped elements (e.g., samples).
 #'
 #' @importFrom rlang enquo
 #' @importFrom magrittr "%>%"
 #'
-#' @name drop_redundant
-#' @rdname drop_redundant
+#' @name remove_redundancy
+#' @rdname remove_redundancy
 #'
 #' @param .data A `tbl` formatted as | <SAMPLE> | <TRANSCRIPT> | <COUNT> | <...> |
 #' @param .element The name of the element column (normally samples).
@@ -581,7 +670,7 @@ rotate_dimensions.tbl_df = rotate_dimensions.ttSc <-
 #'
 #'
 #' counts %>%
-#'     drop_redundant(
+#'     remove_redundancy(
 #' 	   .element = sample,
 #' 	   .feature = transcript,
 #' 	   	.value =  count,
@@ -589,7 +678,7 @@ rotate_dimensions.tbl_df = rotate_dimensions.ttSc <-
 #' 	   	)
 #'
 #' counts %>%
-#'     drop_redundant(
+#'     remove_redundancy(
 #' 	   .element = sample,
 #' 	   .feature = transcript,
 #' 	   	.value = count,
@@ -600,7 +689,7 @@ rotate_dimensions.tbl_df = rotate_dimensions.ttSc <-
 #' @export
 #'
 #'
-drop_redundant <- function(.data,
+remove_redundancy <- function(.data,
                            .element = NULL,
                            .feature = NULL,
                            .value,
@@ -615,10 +704,10 @@ drop_redundant <- function(.data,
 
                            Dim_a_column,
                            Dim_b_column) {
-  UseMethod("drop_redundant", .data)
+  UseMethod("remove_redundancy", .data)
 }
 #' @export
-drop_redundant.default <-  function(.data,
+remove_redundancy.default <-  function(.data,
                                     .element = NULL,
                                     .feature = NULL,
                                     .value,
@@ -637,7 +726,7 @@ drop_redundant.default <-  function(.data,
   print("This function cannot be applied to this object")
 }
 #' @export
-drop_redundant.tbl_df = drop_redundant.ttSc <-  function(.data,
+remove_redundancy.tbl_df = remove_redundancy.ttSc <-  function(.data,
                                                          .element = NULL,
                                                          .feature = NULL,
                                                          .value,
@@ -662,7 +751,7 @@ drop_redundant.tbl_df = drop_redundant.ttSc <-  function(.data,
   Dim_b_column = enquo(Dim_b_column)
 
   if (method == "correlation")
-    drop_redundant_elements_through_correlation(
+    remove_redundancy_elements_through_correlation(
       .data,
       .value = !!.value,
       .element = !!.element,
@@ -672,7 +761,7 @@ drop_redundant.tbl_df = drop_redundant.ttSc <-  function(.data,
       log_transform = log_transform
     )
   else if (method == "reduced_dimensions")
-    drop_redundant_elements_though_reduced_dimensions(
+    remove_redundancy_elements_though_reduced_dimensions(
       .data,
       Dim_a_column = !!Dim_a_column,
       Dim_b_column = !!Dim_b_column,
@@ -900,13 +989,13 @@ aggregate_duplicates.tbl_df = aggregate_duplicates.ttSc <-
 
 #' Get cell type proportions from samples
 #'
-#' @description annotate_cell_type() takes as imput a `tbl` formatted as | <SAMPLE> | <TRANSCRIPT> | <COUNT> | <...> | and returns a `tbl` with the estimated cell type abundance for each sample
+#' @description deconvolve_cellularity() takes as imput a `tbl` formatted as | <SAMPLE> | <TRANSCRIPT> | <COUNT> | <...> | and returns a `tbl` with the estimated cell type abundance for each sample
 #'
 #' @importFrom rlang enquo
 #' @importFrom magrittr "%>%"
 #'
-#' @name annotate_cell_type
-#' @rdname annotate_cell_type
+#' @name deconvolve_cellularity
+#' @rdname deconvolve_cellularity
 #'
 #' @param .data A `tbl` formatted as | <SAMPLE> | <TRANSCRIPT> | <COUNT> | <...> |
 #' @param .sample The name of the sample column
@@ -929,25 +1018,25 @@ aggregate_duplicates.tbl_df = aggregate_duplicates.ttSc <-
 #'
 #'
 #' 	counts %>%
-#' 	    annotate_cell_type(sample, transcript, `count`)
+#' 	    deconvolve_cellularity(sample, transcript, `count`)
 #'
 #'}
 #'
 #' @export
 #'
-annotate_cell_type <- function(.data,
+deconvolve_cellularity <- function(.data,
                                action = "add") {
-  UseMethod("annotate_cell_type", .data)
+  UseMethod("deconvolve_cellularity", .data)
 }
 #' @export
-annotate_cell_type.default <-  function(.data,
+deconvolve_cellularity.default <-  function(.data,
 
                                         action = "add")
 {
   print("This function cannot be applied to this object")
 }
 #' @export
-annotate_cell_type.tbl_df = annotate_cell_type.ttSc <-
+deconvolve_cellularity.tbl_df = deconvolve_cellularity.ttSc <-
   function(.data,
            action = "add")  {
 
@@ -1036,13 +1125,13 @@ annotate_symbol.tbl_df = annotate_symbol.ttSc <-
 
 #' Add differential transcription information to a tbl using edgeR.
 #'
-#' @description test_differential_transcription() takes as imput a `tbl` formatted as | <SAMPLE> | <TRANSCRIPT> | <COUNT> | <...> | and returns a `tbl` with additional columns for the statistics from the hypothesis test.
+#' @description test_differential_abundance() takes as imput a `tbl` formatted as | <SAMPLE> | <TRANSCRIPT> | <COUNT> | <...> | and returns a `tbl` with additional columns for the statistics from the hypothesis test.
 #'
 #' @importFrom rlang enquo
 #' @importFrom magrittr "%>%"
 #'
-#' @name test_differential_transcription
-#' @rdname test_differential_transcription
+#' @name test_differential_abundance
+#' @rdname test_differential_abundance
 #'
 #' @param .data A `tbl` formatted as | <SAMPLE> | <TRANSCRIPT> | <COUNT> | <...> |
 #' @param .formula A formula with no response variable, representing the desired linear model
@@ -1065,7 +1154,7 @@ annotate_symbol.tbl_df = annotate_symbol.ttSc <-
 #'
 #'
 #'
-#' 	test_differential_transcription(
+#' 	test_differential_abundance(
 #' 	    ~ condition,
 #' 	    sample,
 #' 	    transcript,
@@ -1076,17 +1165,17 @@ annotate_symbol.tbl_df = annotate_symbol.ttSc <-
 #'
 #' @export
 #'
-test_differential_transcription <- function(.data,
+test_differential_abundance <- function(.data,
                                             .formula,
                                             .sample = NULL,
                                             .transcript = NULL,
                                             .abundance = NULL,
                                             significance_threshold = 0.05,
                                             action = "add") {
-  UseMethod("test_differential_transcription", .data)
+  UseMethod("test_differential_abundance", .data)
 }
 #' @export
-test_differential_transcription.default <-  function(.data,
+test_differential_abundance.default <-  function(.data,
                                                      .formula,
                                                      .sample = NULL,
                                                      .transcript = NULL,
@@ -1097,7 +1186,7 @@ test_differential_transcription.default <-  function(.data,
   print("This function cannot be applied to this object")
 }
 #' @export
-test_differential_transcription.tbl_df = test_differential_transcription.ttSc <-
+test_differential_abundance.tbl_df = test_differential_abundance.ttSc <-
   function(.data,
            .formula,
            .sample = NULL,
@@ -1193,7 +1282,7 @@ extract_abundance.default <-
     print("This function cannot be applied to this object")
   }
 #' @export
-extract_abundance.tbl_df = extract_abundance.ttSc <-
+extract_abundance.ttSc <-
   function(.data,
            transcripts = NULL,
            all = F,
@@ -1219,10 +1308,7 @@ extract_abundance.tbl_df = extract_abundance.ttSc <-
   }
 
 
-# Join datasets
-
-# ANNOTATE differential transcription
-
+#' Join datasets
 #' @export
 bind_rows <- function(...) {
   UseMethod("bind_rows")
@@ -1238,4 +1324,23 @@ bind_rows.default <-  function(...)
 bind_rows.ttSc <- function(...)
 {
   merged_tt_object(...)
+}
+
+
+#' Mutate datasets
+#' @export
+mutate <- function(.data, ...) {
+  UseMethod("mutate")
+}
+
+#' @export
+mutate.default <-  function(.data, ...)
+{
+  dplyr::mutate(.data, ...)
+}
+
+#' @export
+mutate.ttSc <- function(.data, ...)
+{
+  mutate_update_and_add_attr(.data, ...)
 }

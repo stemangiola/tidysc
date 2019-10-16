@@ -284,7 +284,7 @@ add_class = function(var, name) {
 }
 
 
-#' Sub function of drop_redundant_elements_though_reduced_dimensions
+#' Sub function of remove_redundancy_elements_though_reduced_dimensions
 #'
 #' @param .data A tibble
 #' @return A tibble with pairs to drop
@@ -419,8 +419,21 @@ update_metadata_sc = function(.data, .cell = NULL) {
 
 	seurat_obj = .data %>% attr("seurat")
 
-	# update meta.data with tibble
-	seurat_obj[[1]]@meta.data = .data %>% as.data.frame(row.names = quo_name(.cell))
+	data_set_to_add =
+		.data %>%
+		select(-one_of(seurat_obj[[1]]@meta.data %>% colnames)) %>%
+		arrange(match(!!.cell, seurat_obj[[1]]@meta.data %>% rownames)) %>%
+		select(-!!.cell)
+
+	for(n in data_set_to_add %>% colnames){
+
+		seurat_obj[[1]] <- AddMetaData(
+			object = seurat_obj[[1]],
+			metadata = data_set_to_add %>% pull(n),
+			col.name = n
+		)
+
+	}
 
 	.data %>% add_attr(seurat_obj, "seurat")
 }
@@ -444,6 +457,7 @@ rename_sample_if_samples_not_set_by_user = function(.data) {
     )
 }
 
+#' @export
 error_if_parameters_not_match = function(par1, par2){
 
 	# Covert enquo to strings
@@ -457,12 +471,7 @@ error_if_parameters_not_match = function(par1, par2){
 	par2$.transcript = quo_name(par2$.transcript)
 	par2$.abundance = quo_name(par2$.abundance)
 
-	par = foreach(n = par1 %>% names) %do% {
-		c(par1[[n]], par2[[n]]) %>% grep("NULL", ., invert = T, value=T) %>% unique
-
-	} %>% setNames(par1 %>% names)
-
-	if(par %>% map_int(~ .x %>% length) %>% unique %>% equals(1) %>% `!`) {
+	if(par1 %>% names %>% equals(par2 %>% names) %>% all %>% `!`) {
 		print(cbind(par1, par2))
 		stop("the parameters of the two objects must match")
 	}

@@ -277,6 +277,7 @@ create_tt_from_seurat = function(seurat_object,
 				mutate_if(is.factor, as.character)
 		)  %>%
 		mutate_if(is.character, as.factor) %>%
+		select(-one_of(c("count total", "gene count"))) %>%
 		rename(`count total` = nCount_RNA,
 					 `gene count` = nFeature_RNA) %>%
 
@@ -761,7 +762,7 @@ create_tt_from_tibble_wide_sc = function(.data,
 
 	convert_dash_to_underscore = function(.data, .cell){
 
-		.transcript = enquo(.transcript)
+		.cell = enquo(.cell)
 
 		wired_names =
 			.data %>%
@@ -862,7 +863,17 @@ create_tt_from_tibble_wide_sc = function(.data,
 		) %>%
 
 		# Eliminate orig.ident column, because same as sample
-		select(-contains("orig.ident"))
+		select(-contains("orig.ident")) %>%
+
+		# Add parameters attribute
+		add_attr(map((.) %>% attr("parameters"),
+								 ~ .x %>% c(
+								 	list(
+								 		.transcript = NULL,
+								 		.abundance = NULL
+								 	)
+								 )),
+						 "parameters")
 
 }
 
@@ -933,7 +944,20 @@ create_tt_from_cellRanger_sc <- function(dir_names,
 			high.mito.thresh = high.mito.thresh,
 			high.umi.thresh = high.umi.thresh,
 			genome = genome,
-			species = species)
+			species = species) %>%
+
+		# Eliminate orig.ident column, because same as sample
+		select(-contains("orig.ident")) %>%
+
+		# Add parameters attribute
+		add_attr(map((.) %>% attr("parameters"),
+								 ~ .x %>% c(
+								 	list(
+								 		.transcript = NULL,
+								 		.abundance = NULL
+								 	)
+								 )),
+						 "parameters")
 
 		# %>%
 		#
@@ -1766,7 +1790,7 @@ do_integration_seurat = function(seurat_list) {
 		FindIntegrationAnchors(
 			normalization.method = "SCT",
 			anchor.features = my_features,
-			verbose = FALSE,
+			verbose = TRUE,
 			dims = 1:dims,
 			k.filter = k.filter
 		) %>%
@@ -1848,6 +1872,7 @@ get_adjusted_counts_for_unwanted_variation_sc = function(.data,
 					.x %>%
 					SCTransform(
 						verbose = verbose,
+						assay = "RNA",
 						vars.to.regress = variables_to_regress_no_sample
 					)) %>%
 
@@ -2407,9 +2432,8 @@ merged_tt_object = function(...){
 	error_if_parameters_not_match(par1, par2)
 
 	par =
-		foreach(n = unique(c(par1 %>% names, par2 %>% names))) %do% {
-			switch(par1[[n]] %>% is.null %>% sum(1), par1[[n]], par2[[n]])
-		} %>%
+		unique(c(par1 %>% names, par2 %>% names)) %>%
+		map(~ switch(par1[[.x]] %>% is.null %>% sum(1), par1[[.x]], par2[[.x]])) %>%
 		setNames(par1 %>% names)
 
 	seurat_object = merge(tts[[1]] %>% attr("seurat") %>% `[[` (1), tts[[2]] %>% attr("seurat") %>% `[[` (1))
@@ -2427,7 +2451,6 @@ merged_tt_object = function(...){
 		.sample = !!new.arguments$.sample,
 		.cell = !!new.arguments$.cell
 	)
-	#do.call(create_tt_from_seurat, new.arguments)
 
 }
 
