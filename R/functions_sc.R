@@ -1821,7 +1821,7 @@ get_adjusted_counts_for_unwanted_variation_sc = function(.data,
 
 	# Check if package is installed, otherwise install
 	if ("benchmarkme" %in% rownames(installed.packages()) == FALSE) {
-		writeLines("Installing benchmarkme needed for Cibersort")
+		writeLines("Installing benchmarkme needed for benchmarkme")
 		install.packages("benchmarkme")
 	}
 
