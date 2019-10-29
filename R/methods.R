@@ -821,7 +821,8 @@ adjust_abundance <- function(.data,
                              do.scale = F,
                              do.center = F,
                              verbose = T,
-                             action = "add") {
+                             action = "add",
+                             ...) {
   UseMethod("adjust_abundance", .data)
 }
 #' @export
@@ -830,7 +831,8 @@ adjust_abundance.default <-  function(.data,
                                       do.scale = F,
                                       do.center = F,
                                       verbose = T,
-                                      action = "add")
+                                      action = "add",
+                                      ...)
 {
   print("This function cannot be applied to this object")
 }
@@ -841,7 +843,8 @@ adjust_abundance.tbl_df = adjust_abundance.ttSc <-
            do.scale = F,
            do.center = F,
            verbose = T,
-           action = "add")
+           action = "add",
+           ...)
   {
 
 
@@ -851,7 +854,8 @@ adjust_abundance.tbl_df = adjust_abundance.ttSc <-
         .formula = .formula,
         do.scale = do.scale,
         do.center = do.center,
-        verbose = verbose
+        verbose = verbose,
+        ...
       )
     else if (action == "get")
       get_adjusted_counts_for_unwanted_variation_sc(
@@ -859,7 +863,8 @@ adjust_abundance.tbl_df = adjust_abundance.ttSc <-
         .formula = .formula,
         do.scale = do.scale,
         do.center = do.center,
-        verbose = verbose
+        verbose = verbose,
+        ...
       )
     else
       stop(

@@ -5,7 +5,7 @@
 \title{Add addjust counts for unwanted variation}
 \usage{
 add_adjusted_counts_for_unwanted_variation_sc(.data, .formula,
-  do.scale = F, do.center = F, verbose = T)
+  do.scale = F, do.center = F, verbose = T, ...)
 }
 \arguments{
 \item{.data}{A seurat list}

@@ -88,11 +88,11 @@ In brief you can:
 + Adding principal .dims
 + Adding MDS .dims
 + Rotating principal component or MDS dimensions
-+ Running differential transcript abunance analyses (edgeR)
-+ Adding batch adjusted counts (Combat) 
++ Running differential transcript abunance analyses
++ Adding batch adjusted counts 
 + Eliminating redunant samples and/or genes
 + Clustering samples and/or genes with kmeans
-+ Adding tissue composition (Cibersort)
++ Adding tissue composition 
 
 # Aggregate `transcripts`
 
@@ -278,7 +278,11 @@ We may want to adjust `counts` for (known) unwanted variation. `adjust_abundance
 ```{r adjust, cache=TRUE}
 counts.norm.adj =
 	tt.norm %>%
-	  adjust_abundance( 	~ sample, verbose=F )
+	  adjust_abundance( 
+	  	~ sample,
+	  	verbose=F,
+	  	return.only.var.genes = FALSE 
+	  )
 
 counts.norm.adj.UMAP = 
 	counts.norm.adj %>%

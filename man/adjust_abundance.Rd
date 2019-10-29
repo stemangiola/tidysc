@@ -5,7 +5,7 @@
 \title{Adjust transcript abundance for unwanted variation}
 \usage{
 adjust_abundance(.data, .formula, do.scale = F, do.center = F,
-  verbose = T, action = "add")
+  verbose = T, action = "add", ...)
 }
 \arguments{
 \item{.data}{A `tbl` formatted as | <SAMPLE> | <TRANSCRIPT> | <COUNT> | <...> |}
@@ -14,6 +14,8 @@ adjust_abundance(.data, .formula, do.scale = F, do.center = F,
 
 \item{action}{A character string. Whether to join the new information to the input tbl (add), or just get the non-redundant tbl with the new information (get).}
 
+\item{...}{Further parameters passed to the function sva::ComBat}
+
 \item{.sample}{The name of the sample column}
 
 \item{.transcript}{The name of the transcript/gene column}
@@ -21,8 +23,6 @@ adjust_abundance(.data, .formula, do.scale = F, do.center = F,
 \item{.abundance}{The name of the transcript/gene abundance column}
 
 \item{log_transform}{A boolean, whether the value should be log-transformed (e.g., TRUE for RNA sequencing data)}
-
-\item{...}{Further parameters passed to the function sva::ComBat}
 }
 \value{
 A `tbl` with additional columns for the adjusted counts as `<COUNT COLUMN> adjusted`

@@ -1773,6 +1773,8 @@ add_reduced_dimensions_TSNE = function(.data, .dims = 10) {
 do_integration_seurat = function(seurat_list) {
 	my_features = seurat_list %>% SelectIntegrationFeatures(nfeatures = 3000)
 
+	#plan(strategy = "multicore", workers = 30)
+
 	# Prepare for integration, whatever it means
 	prep_integration =
 		seurat_list %>%
@@ -1804,6 +1806,7 @@ do_integration_seurat = function(seurat_list) {
 #' @import tibble
 #' @import Seurat
 #' @importFrom purrr map
+#' @importFrom furrr future_map
 #'
 #' @param .data A seurat list
 #' @param .formula A formula
@@ -1817,12 +1820,13 @@ get_adjusted_counts_for_unwanted_variation_sc = function(.data,
 																												 .formula,
 																												 do.scale = F,
 																												 do.center = F,
-																												 verbose = T) {
+																												 verbose = T,
+																												 ...) {
 
 	# Check if package is installed, otherwise install
 	if ("benchmarkme" %in% rownames(installed.packages()) == FALSE) {
 		writeLines("Installing benchmarkme needed for benchmarkme")
-		install.packages("benchmarkme")
+		install.packages("benchmarkme", repos = "https://cloud.r-project.org")
 	}
 
 	if(Sys.info()[['sysname']] == "Windows")
@@ -1853,6 +1857,10 @@ get_adjusted_counts_for_unwanted_variation_sc = function(.data,
 	# 	"SCT" %in% (.data %>% attr("seurat") %>% `[[` (1) %>% `@` (assays) %>% names)
 	# ) stop("The object has been already normalised")
 
+	# Evaluate ...
+	arguments <- list(...)
+
+	#plan(strategy = "multicore", workers = 30)
 
 	# Get seurat object
 	seurat_object =
@@ -1868,13 +1876,17 @@ get_adjusted_counts_for_unwanted_variation_sc = function(.data,
 		) %>%
 
 		# Scale data for covariates other than sample
-		map(~
-					.x %>%
-					SCTransform(
+		future_map(~
+
+					# Needed for the use of ... for a function that has ... already for another thing
+					do.call(SCTransform, c(
+						.x,
 						verbose = verbose,
 						assay = "RNA",
-						vars.to.regress = variables_to_regress_no_sample
-					)) %>%
+						vars.to.regress = list(variables_to_regress_no_sample),
+						arguments
+					))
+			) %>%
 
 		# INTEGRATION - If sample within covariates Eliminate sample variation with integration
 		ifelse_pipe(
@@ -1920,7 +1932,8 @@ add_adjusted_counts_for_unwanted_variation_sc = function(.data,
 																												 .formula,
 																												 do.scale = F,
 																												 do.center = F,
-																												 verbose = T) {
+																												 verbose = T,
+																												 ...) {
 	# Update on tibble
 	.data = .data %>% update_object_sc
 
@@ -1933,7 +1946,8 @@ add_adjusted_counts_for_unwanted_variation_sc = function(.data,
 		get_adjusted_counts_for_unwanted_variation_sc(.formula = .formula,
 																									do.scale = do.scale,
 																									do.center = do.center,
-																									verbose = verbose)
+																									verbose = verbose,
+																									...)
 
 	# Merge
 	.data %>%
