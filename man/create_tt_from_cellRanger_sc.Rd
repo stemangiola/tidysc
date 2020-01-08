@@ -4,9 +4,15 @@
 \alias{create_tt_from_cellRanger_sc}
 \title{Create tt object from cellRanger results}
 \usage{
-create_tt_from_cellRanger_sc(dir_names, min.transcripts = 400,
-  min.cells = 5, high.mito.thresh = 0.08, high.umi.thresh = 10000,
-  species, genome = ifelse(species == "Human", "hg38", "mm10"))
+create_tt_from_cellRanger_sc(
+  dir_names,
+  min.transcripts = 400,
+  min.cells = 5,
+  high.mito.thresh = 0.08,
+  high.umi.thresh = 10000,
+  species,
+  genome = ifelse(species == "Human", "hg38", "mm10")
+)
 }
 \arguments{
 \item{dir_names}{A character array with the output directories of cellRanger if run from internal function}

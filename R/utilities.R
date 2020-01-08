@@ -411,6 +411,7 @@ update_object_sc = function(.data, .cell = NULL) {
              "seurat")
 }
 
+#' @export
 update_metadata_sc = function(.data, .cell = NULL) {
 	# Get column names
 	.cell = enquo(.cell)
@@ -421,15 +422,17 @@ update_metadata_sc = function(.data, .cell = NULL) {
 
 	data_set_to_add =
 		.data %>%
-		select(-one_of(seurat_obj[[1]]@meta.data %>% colnames)) %>%
-		arrange(match(!!.cell, seurat_obj[[1]]@meta.data %>% rownames)) %>%
-		select(-!!.cell)
+		#select(-one_of(seurat_obj[[1]]@meta.data %>% colnames)) %>%
+		arrange(match(!!.cell, seurat_obj[[1]]@meta.data %>% rownames))
 
-	for(n in data_set_to_add %>% colnames){
+	for(n in data_set_to_add %>% select(-!!.cell) %>% colnames){
 
 		seurat_obj[[1]] <- AddMetaData(
 			object = seurat_obj[[1]],
-			metadata = data_set_to_add %>% pull(n),
+			metadata =
+				data_set_to_add %>%
+				pull(n) %>%
+				setNames(data_set_to_add %>% pull(!!.cell)),
 			col.name = n
 		)
 

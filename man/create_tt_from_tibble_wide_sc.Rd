@@ -4,10 +4,19 @@
 \alias{create_tt_from_tibble_wide_sc}
 \title{Create tt object from tibble}
 \usage{
-create_tt_from_tibble_wide_sc(.data, .sample, .transcript_position, .cell,
-  species, min.transcripts = 400, min.cells = 5,
-  high.mito.thresh = 0.08, high.umi.thresh = 10000,
-  genome = ifelse(species == "Human", "hg38", "mm10"), ...)
+create_tt_from_tibble_wide_sc(
+  .data,
+  .sample,
+  .transcript_position,
+  .cell,
+  species,
+  min.transcripts = 400,
+  min.cells = 5,
+  high.mito.thresh = 0.08,
+  high.umi.thresh = 10000,
+  genome = ifelse(species == "Human", "hg38", "mm10"),
+  ...
+)
 }
 \arguments{
 \item{.data}{A tibble}

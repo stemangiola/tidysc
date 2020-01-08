@@ -4,10 +4,18 @@
 \alias{create_tt_from_seurat}
 \title{Create tt object from seurat object}
 \usage{
-create_tt_from_seurat(seurat_object, dir_names = list(""),
-  min.transcripts = 400, min.cells = 5, high.mito.thresh = 0.08,
-  high.umi.thresh = 10000, .sample = sample, .cell = cell, species,
-  genome = ifelse(species == "Human", "hg38", "mm10"))
+create_tt_from_seurat(
+  seurat_object,
+  dir_names = list(""),
+  min.transcripts = 400,
+  min.cells = 5,
+  high.mito.thresh = 0.08,
+  high.umi.thresh = 10000,
+  .sample = sample,
+  .cell = cell,
+  species,
+  genome = ifelse(species == "Human", "hg38", "mm10")
+)
 }
 \arguments{
 \item{seurat_object}{A seurat object}

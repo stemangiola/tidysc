@@ -4,9 +4,16 @@
 \alias{add_rotated_dimensions_sc}
 \title{Add Rotated dimensions of two principal .dims or MDS dimensions, of an angle}
 \usage{
-add_rotated_dimensions_sc(.data, dimension_1_column, dimension_2_column,
-  rotation_degrees, .element = NULL, of_samples = T,
-  dimension_1_column_rotated = NULL, dimension_2_column_rotated = NULL)
+add_rotated_dimensions_sc(
+  .data,
+  dimension_1_column,
+  dimension_2_column,
+  rotation_degrees,
+  .element = NULL,
+  of_samples = T,
+  dimension_1_column_rotated = NULL,
+  dimension_2_column_rotated = NULL
+)
 }
 \arguments{
 \item{.data}{A tibble}

@@ -4,9 +4,16 @@
 \alias{aggregate_duplicates}
 \title{Aggregates multiple counts from the same samples (e.g., from isoforms), concatenates other character columns, and averages other numeric columns}
 \usage{
-aggregate_duplicates(.data, aggregation_function = sum, .sample = NULL,
-  .cell = NULL, .transcript = NULL, .abundance = NULL,
-  shape = "long", keep_integer = T)
+aggregate_duplicates(
+  .data,
+  aggregation_function = sum,
+  .sample = NULL,
+  .cell = NULL,
+  .transcript = NULL,
+  .abundance = NULL,
+  shape = "long",
+  keep_integer = T
+)
 }
 \arguments{
 \item{.data}{A `tbl` formatted as | <SAMPLE> | <TRANSCRIPT> | <COUNT> | <...> |}

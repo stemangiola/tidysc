@@ -217,6 +217,7 @@ ttSc_wide.tbl_df <- function(.data,
 #'
 #' }
 #'
+#' @export
 ttSc_cell_ranger <- function(dir_names,
                              min.transcripts = 400,
                              min.cells = 5,
@@ -226,19 +227,19 @@ ttSc_cell_ranger <- function(dir_names,
                              genome = ifelse(species == "Human", "hg38", "mm10")) {
   UseMethod("ttSc_cell_ranger", .data)
 }
+#' #' @export
+#' ttSc_cell_ranger.default <- function(dir_names,
+#'                                      min.transcripts = 400,
+#'                                      min.cells = 5,
+#'                                      high.mito.thresh = 0.08,
+#'                                      high.umi.thresh = 10000,
+#'                                      species,
+#'                                      genome = ifelse(species == "Human", "hg38", "mm10"))
+#' {
+#'   print("This function cannot be applied to this object")
+#' }
 #' @export
 ttSc_cell_ranger.default <- function(dir_names,
-                                     min.transcripts = 400,
-                                     min.cells = 5,
-                                     high.mito.thresh = 0.08,
-                                     high.umi.thresh = 10000,
-                                     species,
-                                     genome = ifelse(species == "Human", "hg38", "mm10"))
-{
-  print("This function cannot be applied to this object")
-}
-#' @export
-ttSc_cell_ranger.tbl_df <- function(dir_names,
                                     min.transcripts = 400,
                                     min.cells = 5,
                                     high.mito.thresh = 0.08,
@@ -370,25 +371,25 @@ scale_abundance.tbl_df = scale_abundance.ttSc <-
 #' @export
 #'
 cluster_elements <- function(.data,
-                              action = "add") {
+                              action = "add", ...) {
   UseMethod("cluster_elements", .data)
 }
 
 #' @export
 cluster_elements.default <-  function(.data,
-                                       action = "add")
+                                       action = "add", ...)
 {
   print("This function cannot be applied to this object")
 }
 
 #' @export
 cluster_elements.ttSc <-  function(.data,
-                                    action = "add")
+                                    action = "add", ...)
 {
   if (action == "add")
-    add_cluster_annotation_SNN_sc(.data)
+    add_cluster_annotation_SNN_sc(.data, ...)
   else if (action == "get")
-    get_cluster_annotation_SNN_sc(.data)
+    get_cluster_annotation_SNN_sc(.data, ...)
   else
     stop(
       "action must be either \"add\" for adding this information to your data frame or \"get\" to just get the information"
@@ -1274,6 +1275,7 @@ test_differential_abundance.tbl_df = test_differential_abundance.ttSc <-
 extract_abundance <- function(.data,
                               transcripts = NULL,
                               all = F,
+															shape = "long",
                               action = "add") {
   UseMethod("extract_abundance", .data)
 }
@@ -1282,6 +1284,7 @@ extract_abundance.default <-
   function(.data,
            transcripts = NULL,
            all = F,
+  				 shape = "long",
            action = "add")
   {
     print("This function cannot be applied to this object")
@@ -1291,25 +1294,50 @@ extract_abundance.ttSc <-
   function(.data,
            transcripts = NULL,
            all = F,
-           action = "add")
+  				 shape = "long",
+  				 action = "add")
   {
 
-    if (action == "add")
-      add_abundance_sc(
-        .data = .data,
-        transcripts = transcripts,
-        all = all
-      )
-    else if (action == "get")
-      get_abundance_sc(
-        .data = .data,
-        transcripts = transcripts,
-        all = all
-      )
-    else
-      stop(
-        "action must be either \"add\" for adding this information to your data frame or \"get\" to just get the information"
-      )
+  	if(shape == "long"){
+	    if (action == "add")
+	      add_abundance_sc_long(
+	        .data = .data,
+	        transcripts = transcripts,
+	        all = all
+	      )
+	    else if (action == "get")
+	    	get_abundance_sc_long(
+	        .data = .data,
+	        transcripts = transcripts,
+	        all = all
+	      )
+	    else
+	      stop(
+	        "action must be either \"add\" for adding this information to your data frame or \"get\" to just get the information"
+	      )
+  	}
+  	else if(shape == "wide"){
+  		if (action == "add")
+  			add_abundance_sc_long(
+  				.data = .data,
+  				transcripts = transcripts,
+  				all = all
+  			)
+  		else if (action == "get")
+  			get_abundance_sc_long(
+  				.data = .data,
+  				transcripts = transcripts,
+  				all = all
+  			)
+  		else
+  			stop(
+  				"action must be either \"add\" for adding this information to your data frame or \"get\" to just get the information"
+  			)
+  	}
+  	else
+  		stop(
+  			"shape must be either \"long\" or \"wide\" "
+  		)
   }
 
 
@@ -1348,4 +1376,22 @@ mutate.default <-  function(.data, ...)
 mutate.ttSc <- function(.data, ...)
 {
   mutate_update_and_add_attr(.data, ...)
+}
+
+#' unite columns
+#' @export
+unite <- function(data, col, ..., sep = "_", remove = TRUE, na.rm = FALSE) {
+  UseMethod("mutate")
+}
+
+#' @export
+unite.default <-  function(data, col, ..., sep = "_", remove = TRUE, na.rm = FALSE)
+{
+  tidyr::unite(data, col, ..., sep = sep, remove = remove, na.rm = na.rm)
+}
+
+#' @export
+unite.ttSc <- function(data, col, ..., sep = "_", remove = TRUE, na.rm = FALSE)
+{
+  unite_update_and_add_attr(data, col, ..., sep = sep, remove = remove, na.rm = na.rm)
 }

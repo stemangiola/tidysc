@@ -403,6 +403,7 @@ counts.norm.non_redundant %>%
 
 ```
 
+
 # Other useful wrappers
 
 The above wrapper streamline the most common processing of bulk RNA sequencing data. Other useful wrappers are listed above.

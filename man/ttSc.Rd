@@ -7,15 +7,38 @@
 \alias{ttSc_cell_ranger}
 \title{Creates a `tt` object from a `tbl``}
 \usage{
-ttSc_long(.data, .sample, .cell, .transcript, .abundance, species,
-  min.transcripts = 400, min.cells = 5, ...)
+ttSc_long(
+  .data,
+  .sample,
+  .cell,
+  .transcript,
+  .abundance,
+  species,
+  min.transcripts = 400,
+  min.cells = 5,
+  ...
+)
 
-ttSc_wide(.data, .sample, .cell, .transcript_position, species,
-  min.transcripts = 400, min.cells = 5, ...)
+ttSc_wide(
+  .data,
+  .sample,
+  .cell,
+  .transcript_position,
+  species,
+  min.transcripts = 400,
+  min.cells = 5,
+  ...
+)
 
-ttSc_cell_ranger(dir_names, min.transcripts = 400, min.cells = 5,
-  high.mito.thresh = 0.08, high.umi.thresh = 10000, species,
-  genome = ifelse(species == "Human", "hg38", "mm10"))
+ttSc_cell_ranger(
+  dir_names,
+  min.transcripts = 400,
+  min.cells = 5,
+  high.mito.thresh = 0.08,
+  high.umi.thresh = 10000,
+  species,
+  genome = ifelse(species == "Human", "hg38", "mm10")
+)
 }
 \arguments{
 \item{.data}{A `tbl` formatted as | <SAMPLE> | <TRANSCRIPT> | <COUNT> | <...> |}
@@ -23,24 +46,6 @@ ttSc_cell_ranger(dir_names, min.transcripts = 400, min.cells = 5,
 \item{.sample}{The name of the sample column}
 
 \item{.cell}{The name of the cell column}
-
-\item{.transcript}{The name of the transcript/gene column}
-
-\item{.abundance}{The name of the transcript/gene abundance column}
-
-\item{.data}{A `tbl` formatted as | <SAMPLE> | <TRANSCRIPT> | <COUNT> | <...> |}
-
-\item{.sample}{The name of the sample column}
-
-\item{.cell}{The name of the cell column}
-
-\item{.transcript}{The name of the transcript/gene column}
-
-\item{.abundance}{The name of the transcript/gene abundance column}
-
-\item{.data}{A `tbl` formatted as | <SAMPLE> | <TRANSCRIPT> | <COUNT> | <...> |}
-
-\item{.sample}{The name of the sample column}
 
 \item{.transcript}{The name of the transcript/gene column}
 

@@ -4,12 +4,14 @@
 \alias{cluster_elements}
 \title{Get clusters of elements (e.g., samples or transcripts)}
 \usage{
-cluster_elements(.data, action = "add")
+cluster_elements(.data, action = "add", ...)
 }
 \arguments{
 \item{.data}{A `tbl` formatted as | <SAMPLE> | <TRANSCRIPT> | <COUNT> | <...> |}
 
 \item{action}{A character string. Whether to join the new information to the input tbl (add), or just get the non-redundant tbl with the new information (get).}
+
+\item{...}{Further parameters passed to the function kmeans}
 
 \item{.element}{The name of the element column (normally samples).}
 
@@ -22,8 +24,6 @@ cluster_elements(.data, action = "add")
 \item{of_samples}{A boolean. In case the input is a ttSc object, it indicates Whether the element column will be sample or transcript column}
 
 \item{log_transform}{A boolean, whether the value should be log-transformed (e.g., TRUE for RNA sequencing data)}
-
-\item{...}{Further parameters passed to the function kmeans}
 }
 \value{
 A tbl object with additional columns with cluster labels

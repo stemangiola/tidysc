@@ -4,8 +4,15 @@
 \alias{create_seurat_from_tibble_wide}
 \title{Create seurat object from tibble}
 \usage{
-create_seurat_from_tibble_wide(.data, .sample, transcript_col_names, .cell,
-  min.transcripts = 400, min.cells = 5, ...)
+create_seurat_from_tibble_wide(
+  .data,
+  .sample,
+  transcript_col_names,
+  .cell,
+  min.transcripts = 400,
+  min.cells = 5,
+  ...
+)
 }
 \arguments{
 \item{.data}{A tibble}

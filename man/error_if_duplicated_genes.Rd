@@ -4,8 +4,12 @@
 \alias{error_if_duplicated_genes}
 \title{Check whether there are duplicated genes/transcripts}
 \usage{
-error_if_duplicated_genes(.data, .sample = sample,
-  .transcript = transcript, .abundance = count)
+error_if_duplicated_genes(
+  .data,
+  .sample = sample,
+  .transcript = transcript,
+  .abundance = count
+)
 }
 \arguments{
 \item{.data}{A tibble of counts}

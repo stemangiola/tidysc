@@ -4,8 +4,14 @@
 \alias{get_adjusted_counts_for_unwanted_variation_sc}
 \title{Get adjusted counts for unwanted variation}
 \usage{
-get_adjusted_counts_for_unwanted_variation_sc(.data, .formula,
-  do.scale = F, do.center = F, verbose = T, ...)
+get_adjusted_counts_for_unwanted_variation_sc(
+  .data,
+  .formula,
+  do.scale = F,
+  do.center = F,
+  verbose = T,
+  ...
+)
 }
 \arguments{
 \item{.data}{A seurat list}

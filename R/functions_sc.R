@@ -111,6 +111,7 @@ aggregate_duplicated_transcripts_sc =
 #'
 #' @importFrom dplyr summarise_all
 #' @importFrom dplyr bind_rows
+#' @import Seurat
 #'
 #' @param .data A tibble
 #' @param .sample A character name of the sample column
@@ -240,6 +241,7 @@ add_variable_genes_to_tt = function(.data, n = 500){
 #' @import tibble
 #' @importFrom purrr map_dfr
 #' @importFrom purrr map
+#' @import Seurat
 #'
 #' @param seurat_object A seurat object
 #' @param dir_names A character array with the output directories of cellRanger if run from internal function
@@ -308,9 +310,7 @@ create_tt_from_seurat = function(seurat_object,
 		add_attr(seurat_object, "seurat") %>%
 
 		# Add parameters object
-		add_attr(map(dir_names,
-								 ~ {
-								 	list(
+		add_attr(list(
 								 		min.transcripts = min.transcripts,
 								 		min.cells = min.cells,
 								 		high.mito.thresh = high.mito.thresh,
@@ -319,9 +319,7 @@ create_tt_from_seurat = function(seurat_object,
 								 		species = species,
 								 		.sample = enquo(.sample),
 								 		.cell = enquo(.cell)
-								 	)
-								 }),
-
+								 	),
 						 "parameters") %>%
 
 		# Add mitochondrion information if not present already
@@ -351,6 +349,7 @@ create_tt_from_seurat = function(seurat_object,
 #' @import dplyr
 #' @import tidyr
 #' @import tibble
+#' @import Seurat
 #'
 #' @param .data A tibble
 #' @param .sample A symbol for the sample column
@@ -394,6 +393,10 @@ create_seurat_from_tibble = function(.data,
       max %>% `==` (1)"
 		)
 
+	# Check if data rectangular
+	if(.data %>% count(!!.cell) %>% count(n) %>% nrow %>% `>` (1))
+		stop("The input data frame does not represent a rectangular structure. Each transcript must be present in all cells")
+
 	# Set sample names
 	sample_names =
 		.data %>%
@@ -428,11 +431,11 @@ create_seurat_from_tibble = function(.data,
 	seurat_object@meta.data$orig.ident =
 		colnames(seurat_object) %>%
 		as_tibble() %>%
-		rename(cell = value) %>%
+		rename(!!.cell := value) %>%
 		left_join(
 			.data %>%
 				distinct(!!.sample,!!.cell),
-			by = "cell"
+			by = quo_name(.cell)
 		)  %>%
 		pull(!!.sample) # seurat_object@meta.data[[quo_name(.sample)]]
 
@@ -446,6 +449,7 @@ create_seurat_from_tibble = function(.data,
 #' @import dplyr
 #' @import tidyr
 #' @import tibble
+#' @import Seurat
 #'
 #' @param .data A tibble
 #' @param .sample A symbol for the sample column
@@ -497,11 +501,11 @@ create_seurat_from_tibble_wide = function(.data,
 	seurat_object@meta.data$orig.ident =
 		colnames(seurat_object) %>%
 		enframe() %>%
-		rename(cell = value) %>%
+		rename(!!.cell := value) %>%
 		left_join(
 			.data %>%
 				distinct(!!.sample,!!.cell),
-			by = "cell"
+			by = quo_name(.cell)
 		)  %>%
 		pull(!!.sample) # seurat_object@meta.data[[quo_name(.sample)]]
 
@@ -517,6 +521,7 @@ create_seurat_from_tibble_wide = function(.data,
 #' @import tidyr
 #' @import tibble
 #' @importFrom purrr map
+#' @import Seurat
 #'
 #' @param .data A tibble
 #' @param .sample A character name of the sample column
@@ -655,7 +660,7 @@ create_tt_from_tibble_sc = function(.data,
 			(.) %>% pull(!!.sample) %>% levels %>% length %>% `>` (1),
 			~ .x %>%
 				mutate(sample_idx = !!.sample %>% as.integer) %>%
-				unite(!!.cell, c(!!.cell, sample_idx), sep = "_")
+				tidyr::unite(!!.cell, c(!!.cell, sample_idx), sep = "_")
 		) %>%
 
 		# Anonymous function - create Seurat object
@@ -686,13 +691,12 @@ create_tt_from_tibble_sc = function(.data,
 		select(-contains("orig.ident")) %>%
 
 		# Add parameters attribute
-		add_attr(map((.) %>% attr("parameters"),
-								 ~ .x %>% c(
+		add_attr((.) %>% attr("parameters") %>% c(
 								 	list(
 								 		.transcript = enquo(.transcript),
 								 		.abundance = enquo(.abundance)
 								 	)
-								 )),
+								 ),
 						 "parameters")
 
 }
@@ -703,6 +707,7 @@ create_tt_from_tibble_sc = function(.data,
 #' @import tidyr
 #' @import tibble
 #' @importFrom purrr map
+#' @import Seurat
 #'
 #' @param .data A tibble
 #' @param .sample A character name of the sample column
@@ -847,7 +852,7 @@ create_tt_from_tibble_wide_sc = function(.data,
 																	 !!.cell,
 																	 min.transcripts = min.transcripts,
 																	 min.cells = min.cells,
-																	 ...)%>%
+																	 ...) %>%
 
 		# Create tt object from seurat
 		list %>%
@@ -864,16 +869,26 @@ create_tt_from_tibble_wide_sc = function(.data,
 
 		# Eliminate orig.ident column, because same as sample
 		select(-contains("orig.ident")) %>%
+	# %>%
 
 		# Add parameters attribute
-		add_attr(map((.) %>% attr("parameters"),
-								 ~ .x %>% c(
-								 	list(
-								 		.transcript = NULL,
-								 		.abundance = NULL
-								 	)
-								 )),
-						 "parameters")
+
+		# Attach attributes
+
+		add_attr(
+			(.) %>%
+				attr("parameters") %>%
+				c(	.transcript =	(function(x, v) enquo(v))(x, !!as.symbol("transcript"))	),
+			"parameters"
+		) %>%
+		add_attr(
+			(.) %>%
+				attr("parameters") %>%
+				c(	.abundance =	(function(x, v) enquo(v))(x, !!as.symbol("abundance"))	),
+			"parameters"
+		)
+
+
 
 }
 
@@ -884,6 +899,7 @@ create_tt_from_tibble_wide_sc = function(.data,
 #' @import tibble
 #' @import Seurat
 #' @importFrom purrr pmap
+#' @import Seurat
 #'
 #' @param dir_names A character array with the output directories of cellRanger if run from internal function
 #' @param min.transcripts An integer with the threshold of the minimum number of genes allowed for each cell
@@ -919,7 +935,7 @@ create_tt_from_cellRanger_sc <- function(dir_names,
 				 		CreateSeuratObject(
 				 			min.cells = min.cells,
 				 			min.features = min.transcripts,
-				 			project = ..1 %>% basename()
+				 			project = ..1
 				 		)
 
 				 	# If there is more than one sample add number to cell names
@@ -929,6 +945,12 @@ create_tt_from_cellRanger_sc <- function(dir_names,
 				 	my_obj
 
 				 })
+
+		# Merge objects
+	if(length(seurat_object) > 1)
+	seurat_object =
+			merge(x = seurat_object[[1]], y=seurat_object[2:length(seurat_object)]) %>%
+			list()
 
 	# If object empty through error
 	if (seurat_object %>% length == 0)
@@ -950,13 +972,12 @@ create_tt_from_cellRanger_sc <- function(dir_names,
 		select(-contains("orig.ident")) %>%
 
 		# Add parameters attribute
-		add_attr(map((.) %>% attr("parameters"),
-								 ~ .x %>% c(
+		add_attr((.) %>% attr("parameters") %>% c(
 								 	list(
 								 		.transcript = NULL,
 								 		.abundance = NULL
 								 	)
-								 )),
+								 ),
 						 "parameters")
 
 		# %>%
@@ -997,6 +1018,7 @@ create_tt_from_cellRanger_sc <- function(dir_names,
 #' @import Seurat
 #' @importFrom purrr map
 #' @importFrom purrr map_dfr
+#' @import Seurat
 #'
 #' @param .data A tt object
 #'
@@ -1010,7 +1032,7 @@ get_mitochndrion_transcription_abundance_sc = function(.data, .cell) {
 	.cell = enquo(.cell)
 
 	# Cell column name
-	# .cell_name = .data %>% attr("parameters") %>% `[[` (1) %$% .cell %>% quo_name
+	# .cell_name = .data %>% attr("parameters")  %$% .cell %>% quo_name
 
 	# Update on tibble
 	.data = .data %>% update_object_sc(!!.cell)
@@ -1037,12 +1059,12 @@ get_mitochndrion_transcription_abundance_sc = function(.data, .cell) {
 				#mutate(sample = .x@project.name) %>%
 				left_join(
 					.data %>%
-						select(cell, `count total`) %>%
+						select(!!.cell, `count total`) %>%
 						mutate_if(is.factor, as.character),
 					by = quo_name(.cell)
 				) %>%
 				mutate(`fraction mitochondrion` = `count mitochondrion total` / `count total`) %>%
-				select(cell,
+				select(!!.cell,
 							 `count mitochondrion total`,
 							 `fraction mitochondrion`)
 
@@ -1066,7 +1088,7 @@ get_mitochndrion_transcription_abundance_sc = function(.data, .cell) {
 				#   `count mitochondrion total` = mito.tot,
 				#   `fraction mitochondrion` = mito.fraction
 				# ) %>%
-				select(cell, mito.fraction, mito.tot)
+				select(!!.cell, mito.fraction, mito.tot)
 		}) %>%
 		mutate_if(is.character, as.factor) %>%
 
@@ -1082,6 +1104,7 @@ get_mitochndrion_transcription_abundance_sc = function(.data, .cell) {
 #' @import tidyr
 #' @import tibble
 #' @import Seurat
+#' @import Seurat
 #'
 #' @param .data A tt object
 #'
@@ -1096,7 +1119,7 @@ add_mitochndrion_transcription_abundance_sc = function(.data, .cell) {
 	.data = .data %>% update_object_sc(!!.cell)
 
 	# Cell column name
-	# .cell_name = .data %>% attr("parameters") %>% `[[` (1) %$% .cell %>% quo_name
+	# .cell_name = .data %>% attr("parameters")  %$% .cell %>% quo_name
 
 	# Get now object
 	.data.annotated =
@@ -1122,6 +1145,7 @@ add_mitochndrion_transcription_abundance_sc = function(.data, .cell) {
 #' @import Seurat
 #' @importFrom purrr map
 #' @importFrom purrr map_dfr
+#' @import Seurat
 #'
 #' @param .data A tt object
 #'
@@ -1130,10 +1154,10 @@ add_mitochndrion_transcription_abundance_sc = function(.data, .cell) {
 #' @export
 get_normalised_counts_sc = function(.data, verbose = TRUE) {
 	# Cell column name
-	.cell = .data %>% attr("parameters") %>% `[[` (1) %$% .cell
-	.sample = .data %>% attr("parameters") %>% `[[` (1) %$% .sample
-	# .transcript = .data %>% attr("parameters") %>% `[[` (1) %$% .transcript
-	# .abundance = .data %>% attr("parameters") %>% `[[` (1) %$% .abundance
+	.cell = .data %>% attr("parameters")  %$% .cell
+	.sample = .data %>% attr("parameters")  %$% .sample
+	# .transcript = .data %>% attr("parameters")  %$% .transcript
+	# .abundance = .data %>% attr("parameters")  %$% .abundance
 
 	# Update on tibble
 	.data = .data %>% update_object_sc(!!.cell)
@@ -1175,6 +1199,7 @@ get_normalised_counts_sc = function(.data, verbose = TRUE) {
 #' @import tidyr
 #' @import tibble
 #' @import Seurat
+#' @import Seurat
 #'
 #' @param .data A tt object
 #'
@@ -1183,7 +1208,7 @@ get_normalised_counts_sc = function(.data, verbose = TRUE) {
 #' @export
 add_normalised_counts_sc = function(.data, verbose = TRUE) {
 	# Cell column name
-	.cell = .data %>% attr("parameters") %>% `[[` (1) %$% .cell
+	.cell = .data %>% attr("parameters")  %$% .cell
 
 	# Update on tibble
 	.data = .data %>% update_object_sc(!!.cell)
@@ -1208,6 +1233,7 @@ add_normalised_counts_sc = function(.data, verbose = TRUE) {
 #' @import tibble
 #' @import Seurat
 #' @importFrom purrr pmap
+#' @import Seurat
 #'
 #' @param .data A tt object
 #' @param doublet.reps A numeric
@@ -1300,6 +1326,7 @@ add_doublet_classification_sc = function(.data, doublet.reps) {
 #' @import tibble
 #' @import Seurat
 #' @importFrom purrr map
+#' @import Seurat
 #'
 #' @param .data A tt object
 #'
@@ -1326,6 +1353,7 @@ add_variable_genes_classification = function(.data) {
 #' @import dplyr
 #' @import tidyr
 #' @import tibble
+#' @import Seurat
 #' @import Seurat
 #'
 #' @param .data A seurat object
@@ -1368,6 +1396,7 @@ iterate_cell_cycle_scoreing = function(x, s.features, g2m.features, StartNBin = 
 #' @importFrom purrr map2
 #' @importFrom purrr map
 #' @importFrom purrr map2_dfr
+#' @import Seurat
 #'
 #' @param .data A tt object
 #'
@@ -1382,8 +1411,8 @@ get_cell_cycle_annotation_sc = function(.data, .cell) {
 	writeLines("Classifying cells among cell cycle states")
 
 	# Cell column name
-	# .cell = .data %>% attr("parameters") %>% `[[` (1) %$% .cell
-	# .sample = .data %>% attr("parameters") %>% `[[` (1) %$% .sample
+	# .cell = .data %>% attr("parameters")  %$% .cell
+	# .sample = .data %>% attr("parameters")  %$% .sample
 
 	# Update on tibble
 	.data = .data %>% update_object_sc(!!.cell)
@@ -1393,12 +1422,12 @@ get_cell_cycle_annotation_sc = function(.data, .cell) {
 
 		.data %>%
 		attr("seurat") %>%
-		map2(.data %>% attr("parameters"),
+		map(
 				 ~ {
 				 	# Get cell cycle genes
 				 	cc.genes =
 				 		switch(
-				 			grepl("mm", .y$genome) %>% `!` %>% sum(1),
+				 			grepl("mm", .data %>% attr("parameters") %$% genome) %>% `!` %>% sum(1),
 				 			cc.genes_mouse,
 				 			Seurat::cc.genes
 				 		) %>%
@@ -1414,7 +1443,7 @@ get_cell_cycle_annotation_sc = function(.data, .cell) {
                  You don't have any transcript that is within the cell cycle gene signatures for %s.
                  Are you sure you selected the right species?
                  ",
-				 				.y %$% species
+				 				.data %>% attr("parameters") %$% species
 				 			)
 				 		)
 
@@ -1429,8 +1458,7 @@ get_cell_cycle_annotation_sc = function(.data, .cell) {
 
 	# Convert Seurat object to tibble
 	seurat_object %>%
-		map2_dfr(
-			.data %>% attr("parameters"),
+		map_dfr(
 			~ .x %>%
 				`@` (meta.data) %>%
 				as_tibble(rownames = quo_name(.cell)) %>%
@@ -1456,6 +1484,7 @@ get_cell_cycle_annotation_sc = function(.data, .cell) {
 #' @import tidyr
 #' @import tibble
 #' @import Seurat
+#' @import Seurat
 #'
 #' @param .data A tt object
 #'
@@ -1471,7 +1500,7 @@ add_cell_cycle_annotation_sc = function(.data, .cell) {
 	.data = .data %>% update_object_sc(!!.cell)
 
 	# Cell column name
-	# .cell = .data %>% attr("parameters") %>% `[[` (1) %$% .cell
+	# .cell = .data %>% attr("parameters")  %$% .cell
 
 	# Get now object
 	.data.annotated =
@@ -1497,6 +1526,7 @@ add_cell_cycle_annotation_sc = function(.data, .cell) {
 #' @import Seurat
 #' @importFrom purrr map
 #' @importFrom purrr map_dfr
+#' @import Seurat
 #'
 #' @param .data A tt object
 #' @param .dims An integer, the number of .dims to calculate
@@ -1510,7 +1540,7 @@ get_reduced_dimensions_PCA = function(.data,
 	.data = .data %>% update_object_sc
 
 	# Cell column name
-	.cell = .data %>% attr("parameters") %>% `[[` (1) %$% .cell
+	.cell = .data %>% attr("parameters")  %$% .cell
 
 	seurat_object =
 
@@ -1549,6 +1579,7 @@ get_reduced_dimensions_PCA = function(.data,
 #' @import tidyr
 #' @import tibble
 #' @import Seurat
+#' @import Seurat
 #'
 #' @param .data A tt object
 #' @param .dims An integer, the number of .dims to calculate
@@ -1561,7 +1592,7 @@ add_reduced_dimensions_PCA = function(.data, .dims = 10) {
 	.data = .data %>% update_object_sc
 
 	# Cell column name
-	.cell = .data %>% attr("parameters") %>% `[[` (1) %$% .cell
+	.cell = .data %>% attr("parameters")  %$% .cell
 
 	# Get now object
 	.data.annotated =
@@ -1587,6 +1618,7 @@ add_reduced_dimensions_PCA = function(.data, .dims = 10) {
 #' @import Seurat
 #' @importFrom purrr map
 #' @importFrom purrr map_dfr
+#' @import Seurat
 #'
 #' @param .data A tt object
 #' @param .dims An integer, the number of .dims to calculate
@@ -1599,7 +1631,7 @@ get_reduced_dimensions_UMAP = function(.data, .dims = 10) {
 	.data = .data %>% update_object_sc
 
 	# Cell column name
-	.cell = .data %>% attr("parameters") %>% `[[` (1) %$% .cell
+	.cell = .data %>% attr("parameters")  %$% .cell
 
 	seurat_object =
 
@@ -1639,6 +1671,7 @@ get_reduced_dimensions_UMAP = function(.data, .dims = 10) {
 #' @import tidyr
 #' @import tibble
 #' @import Seurat
+#' @import Seurat
 #'
 #' @param .data A tt object
 #' @param .dims An integer, the number of .dims to calculate
@@ -1651,7 +1684,7 @@ add_reduced_dimensions_UMAP = function(.data, .dims = 10) {
 	.data = .data %>% update_object_sc
 
 	# Cell column name
-	.cell = .data %>% attr("parameters") %>% `[[` (1) %$% .cell
+	.cell = .data %>% attr("parameters")  %$% .cell
 
 	# Get now object
 	.data.annotated =
@@ -1677,6 +1710,7 @@ add_reduced_dimensions_UMAP = function(.data, .dims = 10) {
 #' @import Seurat
 #' @importFrom purrr map
 #' @importFrom purrr map_dfr
+#' @import Seurat
 #'
 #' @param .data A tt object
 #' @param .dims An integer, the number of .dims to calculate
@@ -1689,7 +1723,7 @@ get_reduced_dimensions_TSNE = function(.data, .dims = 10) {
 	.data = .data %>% update_object_sc
 
 	# Cell column name
-	.cell = .data %>% attr("parameters") %>% `[[` (1) %$% .cell
+	.cell = .data %>% attr("parameters")  %$% .cell
 
 	seurat_object =
 
@@ -1729,6 +1763,7 @@ get_reduced_dimensions_TSNE = function(.data, .dims = 10) {
 #' @import tidyr
 #' @import tibble
 #' @import Seurat
+#' @import Seurat
 #'
 #' @param .data A tt object
 #' @param .dims An integer, the number of .dims to calculate
@@ -1741,7 +1776,7 @@ add_reduced_dimensions_TSNE = function(.data, .dims = 10) {
 	.data = .data %>% update_object_sc
 
 	# Cell column name
-	.cell = .data %>% attr("parameters") %>% `[[` (1) %$% .cell
+	.cell = .data %>% attr("parameters")  %$% .cell
 
 	# Get now object
 	.data.annotated =
@@ -1766,6 +1801,7 @@ add_reduced_dimensions_TSNE = function(.data, .dims = 10) {
 #' @import tibble
 #' @import Seurat
 #' @importFrom purrr map_int
+#' @import Seurat
 #'
 #' @param .data A seurat list
 #'
@@ -1807,6 +1843,7 @@ do_integration_seurat = function(seurat_list) {
 #' @import Seurat
 #' @importFrom purrr map
 #' @importFrom furrr future_map
+#' @import Seurat
 #'
 #' @param .data A seurat list
 #' @param .formula A formula
@@ -1839,10 +1876,10 @@ get_adjusted_counts_for_unwanted_variation_sc = function(.data,
 	.data = .data %>% update_object_sc
 
 	# Sample column name
-	.sample_name = .data %>% attr("parameters") %>% `[[` (1) %$% .sample %>% quo_name
+	.sample_name = .data %>% attr("parameters")  %$% .sample %>% quo_name
 
 	# Cell column name
-	.cell = .data %>% attr("parameters") %>% `[[` (1) %$% .cell
+	.cell = .data %>% attr("parameters")  %$% .cell
 
 	# Get character array of variable to regress
 	variables_to_regress = parse_formula(.formula)
@@ -1876,16 +1913,35 @@ get_adjusted_counts_for_unwanted_variation_sc = function(.data,
 		) %>%
 
 		# Scale data for covariates other than sample
-		future_map(~
+		map(~ {
 
+			library(future)
+			plan("multiprocess", workers = 25)
+
+			SCTransform(.x,
+									verbose = verbose,
+									assay = "RNA",
+									vars.to.regress = variables_to_regress_no_sample
+									)
 					# Needed for the use of ... for a function that has ... already for another thing
-					do.call(SCTransform, c(
-						.x,
-						verbose = verbose,
-						assay = "RNA",
-						vars.to.regress = list(variables_to_regress_no_sample),
-						arguments
-					))
+			# args = list(
+			# 	object = .x,
+			# 	verbose = verbose,
+			# 	assay = "RNA",
+			# 	vars.to.regress = variables_to_regress_no_sample
+			# ) %>%
+			# c(arguments)
+			# exec(SCTransform, !!!args, .env = parent.frame())
+			#
+			#
+			# 		do.call(SCTransform, c(
+			# 			.x,
+			# 			verbose = verbose,
+			# 			assay = "RNA",
+			# 			vars.to.regress = variables_to_regress_no_sample,
+			# 			arguments
+			# 		))
+		}
 			) %>%
 
 		# INTEGRATION - If sample within covariates Eliminate sample variation with integration
@@ -1919,6 +1975,7 @@ get_adjusted_counts_for_unwanted_variation_sc = function(.data,
 #' @import tibble
 #' @import Seurat
 #' @importFrom purrr map
+#' @import Seurat
 #'
 #' @param .data A seurat list
 #' @param .formula A formula
@@ -1938,7 +1995,7 @@ add_adjusted_counts_for_unwanted_variation_sc = function(.data,
 	.data = .data %>% update_object_sc
 
 	# Cell column name
-	.cell = .data %>% attr("parameters") %>% `[[` (1) %$% .cell
+	.cell = .data %>% attr("parameters")  %$% .cell
 
 	# Get now object
 	.data.annotated =
@@ -1968,6 +2025,7 @@ add_adjusted_counts_for_unwanted_variation_sc = function(.data,
 #' @import Seurat
 #' @importFrom purrr map
 #' @importFrom purrr map_dfr
+#' @import Seurat
 #'
 #' @param .data A tt object
 #'
@@ -1979,7 +2037,7 @@ get_cluster_annotation_SNN_sc = function(.data, ...) {
 	.data = .data %>% update_object_sc
 
 	# Cell column name
-	.cell = .data %>% attr("parameters") %>% `[[` (1) %$% .cell
+	.cell = .data %>% attr("parameters")  %$% .cell
 
 	# Add PCA if not present
 	.data  = .data %>% add_reduced_dimensions_PCA(.dims = 50)
@@ -2027,6 +2085,7 @@ get_cluster_annotation_SNN_sc = function(.data, ...) {
 #' @import tidyr
 #' @import tibble
 #' @import Seurat
+#' @import Seurat
 #'
 #' @param .data A tt object
 #'
@@ -2038,7 +2097,7 @@ add_cluster_annotation_SNN_sc = function(.data, ...) {
 	.data = .data %>% update_object_sc
 
 	# Cell column name
-	.cell = .data %>% attr("parameters") %>% `[[` (1) %$% .cell
+	.cell = .data %>% attr("parameters")  %$% .cell
 
 	# Get now object
 	.data.annotated =
@@ -2114,95 +2173,93 @@ get_cell_type_annotation_sc = function(.data) {
 
 
 	# Cell column name
-	.cell = .data %>% attr("parameters") %>% `[[` (1) %$% .cell
+	.cell = .data %>% attr("parameters")  %$% .cell
 
 	# Update on tibble
 	.data = .data %>% update_object_sc(!!.cell)
 
-	seurat_object =
+	.x = .data %>%
+		attr("seurat") %>% `[[` (1)
+	.y = .data %>% attr("parameters")
 
-		.data %>%
-		attr("seurat") %>%
-		map2(.data %>% attr("parameters"),
-				 ~ {
-				 	my_clusters = switch(
-				 		"cluster" %in% (.x@meta.data %>% colnames) %>% `!` %>% sum(1),
-				 		.x@meta.data$cluster %>% as.character,
-				 		NULL
-				 	)
+	 	my_clusters = switch(
+	 		"cluster" %in% (.x@meta.data %>% colnames) %>% `!` %>% sum(1),
+	 		.x@meta.data$cluster %>% as.character,
+	 		NULL
+	 	)
 
-				 	ct_class =
-				 		.x %>%
-				 		run_singleR(my_clusters,
-				 								species =  .y$species) %$%
-				 		singler %>%
+	 	ct_class =
+	 		.x %>%
+	 		run_singleR(my_clusters,
+	 								species =  .y$species) %$%
+	 		singler %>%
 
-				 		# Get cell-clusters
-				 		map( ~ {
+	 		# Get cell-clusters
+	 		map( ~ {
 
-				 			# Get cluster-cell type tibble
-				 			cell_types_tibble =
-				 				.x$SingleR.clusters$labels %>%
+	 			# Get cluster-cell type tibble
+	 			cell_types_tibble =
+	 				.x$SingleR.clusters$labels %>%
 
-				 				# Get rownames only if there are rownames
-				 				ifelse_pipe(
-				 					(.) %>% nrow %>% `>` (1),
-				 					~ .x %>% as_tibble(rownames = "cluster") ,
-				 					~ .x %>% as_tibble()
-				 				) %>%
-				 				mutate(reference = sprintf("Cell type %s", .x$about$RefData))
+	 				# Get rownames only if there are rownames
+	 				ifelse_pipe(
+	 					(.) %>% nrow %>% `>` (1),
+	 					~ .x %>% as_tibble(rownames = "cluster") ,
+	 					~ .x %>% as_tibble()
+	 				) %>%
+	 				mutate(reference = sprintf("Cell type %s", .x$about$RefData))
 
-				 			# left join with original dataset
-				 			# If SingleR calculated clusters itself
-				 			if(my_clusters %>% is.null)
-				 				clusters_tibble =
-				 					.x$SingleR.single$clusters$cl %>%
-				 					as_tibble(rownames = quo_name(.cell)) %>%
-				 					rename(cluster = value)
+	 			# left join with original dataset
+	 			# If SingleR calculated clusters itself
+	 			if(my_clusters %>% is.null)
+	 				clusters_tibble =
+	 					.x$SingleR.single$clusters$cl %>%
+	 					as_tibble(rownames = quo_name(.cell)) %>%
+	 					rename(cluster = value)
 
-				 			# If clusters were provided before
-				 			else clusters_tibble =
-				 					.data %>%
-				 					drop_class(c("ttSc", "tt")) %>%
-				 					distinct(cluster, !!.cell)
+	 			# If clusters were provided before
+	 			else clusters_tibble =
+	 					.data %>%
+	 					drop_class(c("ttSc", "tt")) %>%
+	 					distinct(cluster, !!.cell)
 
-				 			left_join(clusters_tibble, cell_types_tibble)
+	 			left_join(clusters_tibble, cell_types_tibble)
 
-				 		}) %>%
-				 		do.call("bind_rows", .) %>%
+	 		}) %>%
+	 		do.call("bind_rows", .) %>%
 
-				 		# If I don't provide the cluster
-				 		# eliminate it from the table
-				 		# as it will be different for
-				 		# the different data sets of SingleR
-				 		ifelse_pipe(my_clusters %>% is.null,
-				 								~ .x %>% select(-cluster)) %>%
-				 		spread(reference, V1)
+	 		# If I don't provide the cluster
+	 		# eliminate it from the table
+	 		# as it will be different for
+	 		# the different data sets of SingleR
+	 		ifelse_pipe(my_clusters %>% is.null,
+	 								~ .x %>% select(-cluster)) %>%
+	 		spread(reference, V1)
 
-				 	#cn = ct_class %>% select(-one_of("cluster")) %>% colnames
-				 	my_obj = .x
+	 	#cn = ct_class %>% select(-one_of("cluster")) %>% colnames
+	 	my_obj = .x
 
-				 	# Add renamed annotation
-				 	my_obj@meta.data =
-				 		my_obj@meta.data %>%
-				 		select(-one_of("cluster")) %>%
-				 		cbind(
-				 			ct_class[
-				 				match(
-				 					my_obj@meta.data %>% rownames ,
-				 					ct_class %>% pull(!!.cell)),
-				 				] %>%
-				 				mutate_if(is.character, as.factor) %>%
-				 				select(-!!.cell)
-				 		)
+	 	# Add renamed annotation
+	 	my_obj@meta.data =
+	 		my_obj@meta.data %>%
+	 		select(-one_of("cluster")) %>%
+	 		cbind(
+	 			ct_class[
+	 				match(
+	 					my_obj@meta.data %>% rownames ,
+	 					ct_class %>% pull(!!.cell)),
+	 				] %>%
+	 				mutate_if(is.character, as.factor) %>%
+	 				select(-!!.cell)
+	 		)
 
-				 	# mutate(cluster = cluster %>% as.character) %>%
-				 	# left_join(ct_class,  by = "cluster") %>%
-				 	# mutate(cluster = seurat_clusters)
+	 	# mutate(cluster = cluster %>% as.character) %>%
+	 	# left_join(ct_class,  by = "cluster") %>%
+	 	# mutate(cluster = seurat_clusters)
 
-				 	# Return
-				 	my_obj
-				 })
+	 	# Return
+	 	seurat_object = my_obj %>% list()
+
 
 	seurat_object %>%
 		map_dfr(
@@ -2239,7 +2296,7 @@ add_cell_type_annotation_sc = function(.data) {
 	.data = .data %>% update_object_sc
 
 	# Cell column name
-	.cell = .data %>% attr("parameters") %>% `[[` (1) %$% .cell
+	.cell = .data %>% attr("parameters")  %$% .cell
 
 	# Get now object
 	.data.annotated =
@@ -2287,7 +2344,7 @@ get_rotated_dimensions_sc =
 					 dimension_1_column_rotated = NULL,
 					 dimension_2_column_rotated = NULL) {
 		# Get column names
-		.element = ifelse(of_samples, .data %>% attr("parameters") %>% `[[` (1) %$% sample)
+		.element = ifelse(of_samples, .data %>% attr("parameters")  %$% sample)
 
 		# .element = enquo(.element)
 		# col_names = get_elements(.data, .element)
@@ -2503,16 +2560,16 @@ filter_update_and_add_attr = function(.data, ...){
 
 }
 
-#' get abundance
+#' get abundance long
 #' @importFrom magrittr "%$%"
 #'
 #' @export
-get_abundance_sc = function(.data, transcripts = NULL, all = F){
+get_abundance_sc_long = function(.data, transcripts = NULL, all = F){
 
 	# Cell column name
-	.cell = .data %>% attr("parameters") %>% `[[` (1) %$% .cell
-	.transcript = .data %>% attr("parameters") %>% `[[` (1) %$% .transcript
-	.abundance = .data %>% attr("parameters") %>% `[[` (1) %$% .abundance
+	.cell = .data %>% attr("parameters")  %$% .cell
+	.transcript = .data %>% attr("parameters")  %$% .transcript
+	.abundance = .data %>% attr("parameters")  %$% .abundance
 
 	# Check if output would be too big without forcing
 	if(
@@ -2533,6 +2590,15 @@ get_abundance_sc = function(.data, transcripts = NULL, all = F){
 				 2. pass an array of transcripts names
 				 3. set all = TRUE (this will output a very large object, do you computer have enough RAM?)
 				 ")
+
+	# Get variable features if existing
+	if(
+		transcripts %>% is.null &
+		all == F &
+		any(c("normalised", "SCT") %in% (.data %>% attr("seurat") %>% `[[` (1) %>% `@` (assays) %>% names))
+	) variable_genes = .data %>% attr("seurat") %>% `[[` (1) %>% `@` (assays) %>% `[[` (length(.)) %>% `@` (var.features)
+	else variable_genes = NULL
+
 	assay_names =
 		.data %>%
 		attr("seurat") %>%
@@ -2541,52 +2607,52 @@ get_abundance_sc = function(.data, transcripts = NULL, all = F){
 		names
 
 
-		.data %>%
-			attr("seurat") %>%
-			`[[` (1) %>%
-			`@` (assays) %>%
+	.data %>%
+		attr("seurat") %>%
+		`[[` (1) %>%
+		`@` (assays) %>%
 
-			# Take active assay
-			map2(assay_names,
+		# Take active assay
+		map2(assay_names,
 
-				~ .x %>%
-					ifelse2_pipe(
-					length(.x@var.features) > 0,
-					transcripts %>% is.null %>% `!`,
-					~ .x[.x@var.features,],
-					~ .x[transcripts,],
-					~ .x@counts
-				) %>%
-					as_tibble(rownames = quo_name(.transcript)) %>%
-					gather(!!.cell, !!(quo_name(.abundance) %>% paste(.y, sep="_")), -!!.transcript) %>%
-					mutate_if(is.character, as.factor) %>%
-
-					# Add back class
-					# Add tt class
-					add_class("tt") %>%
-					add_class("ttSc") %>%
-
-					# Add back the attributes objects
-					add_attr(.data %>% attr("seurat"), "seurat") %>%
-					add_attr(.data %>% attr("parameters"), "parameters")
+			~ .x %>%
+				ifelse2_pipe(
+					variable_genes %>% is.null %>% `!`,
+				transcripts %>% is.null %>% `!`,
+				~ .x@counts[variable_genes,],
+				~ .x@counts[transcripts,],
+				~ stop("It is not convenient to extract all genes, you should have either variable features or transcript list to extract")
 			) %>%
-			Reduce(function(...) left_join(..., by=c("transcript", "cell")), .)
+				as_tibble(rownames = quo_name(.transcript)) %>%
+				gather(!!.cell, !!(quo_name(.abundance) %>% paste(.y, sep="_")), -!!.transcript) %>%
+				mutate_if(is.character, as.factor) %>%
+
+				# Add back class
+				# Add tt class
+				add_class("tt") %>%
+				add_class("ttSc") %>%
+
+				# Add back the attributes objects
+				add_attr(.data %>% attr("seurat"), "seurat") %>%
+				add_attr(.data %>% attr("parameters"), "parameters")
+		) %>%
+		Reduce(function(...) left_join(..., by=c("transcript", "cell")), .)
 
 }
 
 #' @export
-add_abundance_sc = function(.data, transcripts = NULL, all = F){
+add_abundance_sc_long = function(.data, transcripts = NULL, all = F){
 
 	# Update on tibble
 	.data = .data %>% update_object_sc()
 
 	# Cell column name
-	.cell_name = .data %>% attr("parameters") %>% `[[` (1) %$% .cell %>% quo_name
+	.cell_name = .data %>% attr("parameters")  %$% .cell %>% quo_name
 
 	# Get now object
 	.data.annotated =
 		.data %>%
-		get_abundance_sc(transcripts = transcripts, all = all)
+		get_abundance_sc_long(transcripts = transcripts, all = all)
 
 	# Merge
 	.data %>%
@@ -2597,3 +2663,101 @@ add_abundance_sc = function(.data, transcripts = NULL, all = F){
 		add_attr(.data %>% attr("parameters"), "parameters")
 
 }
+
+#' get abundance long
+#' @importFrom magrittr "%$%"
+#'
+#' @export
+get_abundance_sc_wide = function(.data, transcripts = NULL, all = F){
+
+	# Cell column name
+	.cell = .data %>% attr("parameters")  %$% .cell
+	.transcript = .data %>% attr("parameters")  %$% .transcript
+	.abundance = .data %>% attr("parameters")  %$% .abundance
+
+	# Check if output would be too big without forcing
+	if(
+		"var.features" %in% (
+			.data %>%
+			attr("seurat") %>%
+			`[[` (1) %>%
+			attributes() %>%
+			names
+		)  &
+		transcripts %>% is.null &
+		all == F
+	) stop("
+				 Your object do not contain variable trancript labels,
+				 transcript argument is empty and all argument is set to FALSE.
+				 Either:
+				 1. use detect_variable_features() to select variable feature
+				 2. pass an array of transcripts names
+				 3. set all = TRUE (this will output a very large object, do you computer have enough RAM?)
+				 ")
+
+	# Get variable features if existing
+	if(
+		transcripts %>% is.null &
+		all == F &
+		any(c("normalised", "SCT") %in% (.data %>% attr("seurat") %>% `[[` (1) %>% `@` (assays) %>% names))
+	) variable_genes = .data %>% attr("seurat") %>% `[[` (1) %>% `@` (assays) %>% `[[` (length(.)) %>% `@` (var.features)
+	else variable_genes = NULL
+
+	# Just grub last assay
+	my_assay =
+		.data %>%
+		attr("seurat") %>%
+		`[[` (1) %>%
+		`@` (assays) %>%
+		`[[` (length(.))
+
+	assay_names =	my_assay %>% names
+
+ my_assay %>%
+ 	ifelse2_pipe(
+ 		variable_genes %>% is.null %>% `!`,
+ 		transcripts %>% is.null %>% `!`,
+ 		~ .x@counts[variable_genes,],
+ 		~ .x@counts[transcripts,],
+ 		~ stop("It is not convenient to extract all genes, you should have either variable features or transcript list to extract")
+ 	) %>%
+ 	as.matrix() %>%
+ 	t %>%
+ 	as_tibble(rownames = quo_name(.transcript)) %>%
+ 	mutate_if(is.character, as.factor) %>%
+
+ 	# Add back class
+ 	# Add tt class
+ 	add_class("tt") %>%
+ 	add_class("ttSc") %>%
+
+ 	# Add back the attributes objects
+ 	add_attr(.data %>% attr("seurat"), "seurat") %>%
+ 	add_attr(.data %>% attr("parameters"), "parameters")
+
+}
+
+#' @export
+add_abundance_sc_wide= function(.data, transcripts = NULL, all = F){
+
+	# Update on tibble
+	.data = .data %>% update_object_sc()
+
+	# Cell column name
+	.cell_name = .data %>% attr("parameters")  %$% .cell %>% quo_name
+
+	# Get now object
+	.data.annotated =
+		.data %>%
+		get_abundance_sc_wide(transcripts = transcripts, all = all)
+
+	# Merge
+	.data %>%
+		left_join(.data.annotated,	by = .cell_name) %>%
+
+		# Add back the attributes objects
+		add_attr(.data.annotated %>% attr("seurat"), "seurat") %>%
+		add_attr(.data %>% attr("parameters"), "parameters")
+
+}
+

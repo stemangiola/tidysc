@@ -4,7 +4,13 @@
 \alias{extract_abundance}
 \title{Add differential transcription information to a tbl using edgeR.}
 \usage{
-extract_abundance(.data, transcripts = NULL, all = F, action = "add")
+extract_abundance(
+  .data,
+  transcripts = NULL,
+  all = F,
+  shape = "long",
+  action = "add"
+)
 }
 \arguments{
 \item{.data}{A `tbl` formatted as | <SAMPLE> | <TRANSCRIPT> | <COUNT> | <...> |}
