@@ -2147,30 +2147,53 @@ get_cell_type_annotation_sc = function(.data) {
 												 name = NULL,
 												 species,
 												 min.transcripts = 200) {
-		f = !is.na(clusters)
-		singler = SingleR::CreateSinglerObject(
-			as.matrix(
-				GetAssayData(
-					seurat, slot = "counts", assay = "RNA"
+	f = !is.na(clusters)
+
+	# Get references
+	hpca.se <- SingleR::HumanPrimaryCellAtlasData()
+	blueprint <- SingleR::BlueprintEncodeData()
+
+	# Create ref list
+	ref =
+		species %>%
+			ifelse2_pipe(
+				.p1 = (.) %>% tolower() %>% equals("human"),
+				.p2 = (.) %>% tolower() %>% equals("mouse"),
+				~ list(hpca = hpca.se, blueprint = blueprint),
+				~ list(MouseRNAseq = MouseRNAseqData()),
+				stop("Species should be either human or mouse, case insensitive")
+			)
+
+	# Test data frame
+	test = seurat@assays["SCT"]$SCT@counts %>% `+` (1) %>% log %>% Matrix::Matrix(sparse = TRUE)
+
+	# Calculate and return
+	ref %>%
+		map2_dfr(
+			names(ref),
+			~ 	{
+				singler = SingleR::SingleR(
+					test =  test,
+					ref = .x,
+					labels = .x$label.main,
+					clusters = clusters,
+					method = ifelse(clusters %>% is.null, "single", "cluster")
 				)
-			),
-			annot = NULL,
-			seurat@project.name,
-			min.genes = min.transcripts,
-			technology = "10X",
-			species = species,
-			citation = "",
-			ref.list = list(),
-			normalize.gene.length = F,
-			variable.genes = "de",
-			fine.tune = F,
-			do.signatures = F,
-			clusters = clusters[f]
-		)
-		return(singler)
+
+			singler$scores %>% as_tibble %>%
+				dplyr::mutate(ID = singler %>% rownames) %>%
+				mutate(label = singler$first.labels) %>%
+				#gather(ct, score, -ID, -label) %>%
+				nest(`Cell type scores` =  -c(ID, label)) %>%
+				mutate(SingleR_DB = .y)
+
+			}
+		) %>%
+
+	# Integrate inference
+	pivot_wider(values_from = c(label, `Cell type scores`), names_from = SingleR_DB)
+
 	}
-
-
 
 	# Cell column name
 	.cell = .data %>% attr("parameters")  %$% .cell
@@ -2188,79 +2211,60 @@ get_cell_type_annotation_sc = function(.data) {
 	 		NULL
 	 	)
 
+	 	# Save cell type annotation
 	 	ct_class =
 	 		.x %>%
 	 		run_singleR(my_clusters,
-	 								species =  .y$species) %$%
-	 		singler %>%
+	 								species =  .y$species) %>%
 
-	 		# Get cell-clusters
-	 		map( ~ {
+	 		# Change ID name if I have clusters of not
+	 		ifelse_pipe(
+	 			my_clusters %>% is.null,
+	 			~ .x %>% rename(!!.cell := ID),
+	 			~ .x %>% rename(cluster = ID)
+	 		)
 
-	 			# Get cluster-cell type tibble
-	 			cell_types_tibble =
-	 				.x$SingleR.clusters$labels %>%
+	 	# make dataframe with no nest
+	 	ct_class_simple = ct_class %>% select(-contains("Cell type scores"))
 
-	 				# Get rownames only if there are rownames
-	 				ifelse_pipe(
-	 					(.) %>% nrow %>% `>` (1),
-	 					~ .x %>% as_tibble(rownames = "cluster") ,
-	 					~ .x %>% as_tibble()
-	 				) %>%
-	 				mutate(reference = sprintf("Cell type %s", .x$about$RefData))
-
-	 			# left join with original dataset
-	 			# If SingleR calculated clusters itself
-	 			if(my_clusters %>% is.null)
-	 				clusters_tibble =
-	 					.x$SingleR.single$clusters$cl %>%
-	 					as_tibble(rownames = quo_name(.cell)) %>%
-	 					rename(cluster = value)
-
-	 			# If clusters were provided before
-	 			else clusters_tibble =
-	 					.data %>%
-	 					drop_class(c("ttSc", "tt")) %>%
-	 					distinct(cluster, !!.cell)
-
-	 			left_join(clusters_tibble, cell_types_tibble)
-
-	 		}) %>%
-	 		do.call("bind_rows", .) %>%
-
-	 		# If I don't provide the cluster
-	 		# eliminate it from the table
-	 		# as it will be different for
-	 		# the different data sets of SingleR
-	 		ifelse_pipe(my_clusters %>% is.null,
-	 								~ .x %>% select(-cluster)) %>%
-	 		spread(reference, V1)
-
-	 	#cn = ct_class %>% select(-one_of("cluster")) %>% colnames
+	 	# Make writable variable
 	 	my_obj = .x
 
 	 	# Add renamed annotation
 	 	my_obj@meta.data =
 	 		my_obj@meta.data %>%
-	 		select(-one_of("cluster")) %>%
-	 		cbind(
-	 			ct_class[
-	 				match(
-	 					my_obj@meta.data %>% rownames ,
-	 					ct_class %>% pull(!!.cell)),
-	 				] %>%
-	 				mutate_if(is.character, as.factor) %>%
-	 				select(-!!.cell)
-	 		)
+	 		ifelse_pipe(
+	 			my_clusters %>% is.null,
 
-	 	# mutate(cluster = cluster %>% as.character) %>%
-	 	# left_join(ct_class,  by = "cluster") %>%
-	 	# mutate(cluster = seurat_clusters)
+	 			# Bind based on cell name
+	 			~ .x %>%
+	 				cbind(
+	 					ct_class_simple[
+	 						match(
+	 							.x %>% rownames ,
+	 							ct_class_simple %>% pull(!!.cell)),
+	 						] %>%
+	 						mutate_if(is.character, as.factor) %>%
+	 						select(-!!.cell)
+	 				),
+
+	 			# Else, bind based on cluster
+	 			~ .x %>%
+	 				cbind(
+	 					ct_class_simple[
+	 						match(
+	 							.x %>% pull(cluster) ,
+	 							ct_class_simple %>% pull(cluster)),
+	 						] %>%
+	 						mutate_if(is.character, as.factor) %>%
+	 						select(-cluster)
+	 				)
+	 		)
 
 	 	# Return
 	 	seurat_object = my_obj %>% list()
 
-
+	# Make tibble
 	seurat_object %>%
 		map_dfr(
 			~ .x %>%
@@ -2272,6 +2276,9 @@ get_cell_type_annotation_sc = function(.data) {
 				mutate_if(is.factor, as.character)
 		) %>%
 		mutate_if(is.character, as.factor) %>%
+
+		# Join back the nested data
+		left_join(ct_class %>% select(-contains("cluster"))) %>%
 
 		# Add back the attributes objects
 		add_attr(seurat_object, "seurat") %>%
@@ -2499,6 +2506,7 @@ merged_tt_object = function(...){
 	par1 = tts[[1]] %>% attr("parameters") %>% unlist
 	par2 = tts[[2]] %>% attr("parameters") %>% unlist
 
+	.sample_1 = tts[[1]] %>% attr("parameters") %$%
 	# Parameters of the two objects must match
 	error_if_parameters_not_match(par1, par2)
 
@@ -2507,7 +2515,12 @@ merged_tt_object = function(...){
 		map(~ switch(par1[[.x]] %>% is.null %>% sum(1), par1[[.x]], par2[[.x]])) %>%
 		setNames(par1 %>% names)
 
-	seurat_object = merge(tts[[1]] %>% attr("seurat") %>% `[[` (1), tts[[2]] %>% attr("seurat") %>% `[[` (1))
+	# Check if cell with same name
+	seurat_object = merge(
+		tts[[1]] %>% attr("seurat") %>% `[[` (1),
+		tts[[2]] %>% attr("seurat") %>% `[[` (1),
+		add.cell.ids = 1:2
+	)
 
 	new.arguments = c(seurat_object = seurat_object %>% list %>% list, par)
 
