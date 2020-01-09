@@ -425,7 +425,19 @@ update_metadata_sc = function(.data, .cell = NULL) {
 		#select(-one_of(seurat_obj[[1]]@meta.data %>% colnames)) %>%
 		arrange(match(!!.cell, seurat_obj[[1]]@meta.data %>% rownames))
 
-	for(n in data_set_to_add %>% select(-!!.cell) %>% colnames){
+	columns_to_add =
+		data_set_to_add %>% select(-!!.cell) %>%
+		colnames %>%
+
+		# Do not consider in meta.data if nested
+		`[` (
+			sapply(
+			data_set_to_add %>% select(-!!.cell),
+			class
+			) %in% c("character", "integer", "double", "factor")
+	)
+
+	for(n in columns_to_add){
 
 		seurat_obj[[1]] <- AddMetaData(
 			object = seurat_obj[[1]],
