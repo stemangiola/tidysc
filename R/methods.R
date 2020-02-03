@@ -332,7 +332,7 @@ scale_abundance.tbl_df = scale_abundance.ttSc <-
 
 #' Get clusters of elements (e.g., samples or transcripts)
 #'
-#' @description cluster_elements() takes as imput a `tbl` formatted as | <SAMPLE> | <TRANSCRIPT> | <COUNT> | <...> | and identify clusters in the data.
+#' @description cluster_elements() takes as imput a `tbl` formatted as | <SAMPLE> | <TRANSCRIPT> | <COUNT> | <...> | and identify clusters in the data. It uses the function Seurat::FindClusters to identify clusters.
 #'
 #' @importFrom rlang enquo
 #' @importFrom magrittr "%>%"
@@ -1376,6 +1376,36 @@ mutate.default <-  function(.data, ...)
 mutate.ttSc <- function(.data, ...)
 {
   mutate_update_and_add_attr(.data, ...)
+}
+
+#' left_join datasets
+#' @export
+left_join <- function (x, y, by = NULL, copy = FALSE, suffix = c(".x", ".y"),		 ...)  {
+  UseMethod("left_join")
+}
+
+#' @export
+left_join.default <-  function (x, y, by = NULL, copy = FALSE, suffix = c(".x", ".y"),    ...)
+{
+  dplyr::left_join(x, y, by = by, copy = copy, suffix = suffix, ...)
+}
+#' @export
+left_join.ttSc <- function(x, y, by = NULL, copy = FALSE, suffix = c(".x", ".y"),    ...)
+{
+
+  # Drop class to use dplyr
+  class(x) = class(x)[-c(1:2)]
+
+  dplyr::left_join(x, y, by = by, copy = copy, suffix = suffix, ...) %>%
+    add_attr(x %>% attr("seurat"), "seurat") %>%
+    add_attr(x %>% attr("parameters"), "parameters") %>%
+    update_metadata_sc() %>%
+
+    # Add tt class
+    add_class("tt") %>%
+    add_class("ttSc")
+
+
 }
 
 #' unite columns
