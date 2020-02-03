@@ -1876,16 +1876,21 @@ get_adjusted_counts_for_unwanted_variation_sc = function(.data,
 	.data = .data %>% update_object_sc
 
 	# Sample column name
-	.sample_name = .data %>% attr("parameters")  %$% .sample %>% quo_name
+	#.sample_name = .data %>% attr("parameters")  %$% .sample %>% quo_name
 
 	# Cell column name
 	.cell = .data %>% attr("parameters")  %$% .cell
 
+	# Get integrate column
+	.integrate_column = parse_formula(.formula) %>% grep("integrate(", ., fixed = T, value = T) %>% gsub("integrate\\(|\\)", "", .)
+
 	# Get character array of variable to regress
-	variables_to_regress = parse_formula(.formula)
+	variables_to_regress = parse_formula(.formula) %>% gsub("integrate\\(|\\)", "", .)
+
+
 	variables_to_regress_no_sample =
 		variables_to_regress %>%
-		grep(.sample_name, ., value = T, invert = T) %>%
+		grep(.integrate_column, ., value = T, invert = T) %>%
 		ifelse_pipe( (.) %>% length %>% equals(0), ~ NULL)
 
 	# Check if object normalised already
@@ -1906,7 +1911,7 @@ get_adjusted_counts_for_unwanted_variation_sc = function(.data,
 
 		# If Integration split the object before batch correct
 		ifelse_pipe(
-			.sample_name %in% variables_to_regress,
+			.integrate_column %in% variables_to_regress,
 			~ .x %>%
 				map(~ .x %>% SplitObject(split.by = "orig.ident")) %>%
 				unlist
@@ -1946,10 +1951,8 @@ get_adjusted_counts_for_unwanted_variation_sc = function(.data,
 
 		# INTEGRATION - If sample within covariates Eliminate sample variation with integration
 		ifelse_pipe(
-			.sample_name %in% variables_to_regress ,
-			~ .x %>%
-				do_integration_seurat %>%
-				list
+			.integrate_column %in% variables_to_regress ,
+			~ .x %>%	do_integration_seurat %>%	list
 		)
 
 	seurat_object %>%
@@ -2272,13 +2275,14 @@ get_cell_type_annotation_sc = function(.data) {
 				as_tibble(rownames = quo_name(.cell)) %>%
 
 				# Grub last two columns
-				select(!!.cell, (ncol(.) - 1):ncol(.)) %>%
+				select(!!.cell, one_of("cluster"), (ncol(.) - 1):ncol(.)) %>%
 				mutate_if(is.factor, as.character)
 		) %>%
 		mutate_if(is.character, as.factor) %>%
 
 		# Join back the nested data
-		left_join(ct_class %>% select(-contains("cluster"))) %>%
+		left_join(ct_class ) %>%
+		select(-one_of(cluster)) %>%
 
 		# Add back the attributes objects
 		add_attr(seurat_object, "seurat") %>%
@@ -2554,6 +2558,7 @@ mutate_update_and_add_attr = function(.data, ...){
 		add_class("ttSc")
 
 }
+
 
 filter_update_and_add_attr = function(.data, ...){
 
