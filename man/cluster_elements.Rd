@@ -29,7 +29,7 @@ cluster_elements(.data, action = "add", ...)
 A tbl object with additional columns with cluster labels
 }
 \description{
-cluster_elements() takes as imput a `tbl` formatted as | <SAMPLE> | <TRANSCRIPT> | <COUNT> | <...> | and identify clusters in the data.
+cluster_elements() takes as imput a `tbl` formatted as | <SAMPLE> | <TRANSCRIPT> | <COUNT> | <...> | and identify clusters in the data. It uses the function Seurat::FindClusters to identify clusters.
 }
 \details{
 identifies clusters in the data, normally of samples.
