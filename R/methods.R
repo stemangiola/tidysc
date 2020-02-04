@@ -1356,7 +1356,49 @@ bind_rows.default <-  function(...)
 #' @export
 bind_rows.ttSc <- function(...)
 {
-  merged_tt_object(...)
+	tts = dplyr:::flatten_bindable(rlang::dots_values(...))
+
+	par1 = tts[[1]] %>% attr("parameters") %>% unlist
+	par2 = tts[[2]] %>% attr("parameters") %>% unlist
+
+	.sample_1 = tts[[1]] %>% attr("parameters") %$%
+		# Parameters of the two objects must match
+		error_if_parameters_not_match(par1, par2)
+
+	par =
+		unique(c(par1 %>% names, par2 %>% names)) %>%
+		map(~ switch(par1[[.x]] %>% is.null %>% sum(1), par1[[.x]], par2[[.x]])) %>%
+		setNames(par1 %>% names)
+
+	# Check if cell with same name
+	seurat_object = merge(
+		tts[[1]] %>% attr("seurat") %>% `[[` (1),
+		tts[[2]] %>% attr("seurat") %>% `[[` (1),
+		add.cell.ids = 1:2
+	)
+
+	new.arguments = c(seurat_object = seurat_object %>% list %>% list, par)
+
+	create_tt_from_seurat(
+		seurat_object = new.arguments$seurat_object,
+		min.transcripts = new.arguments$min.transcripts,
+		min.cells = new.arguments$min.cells,
+		high.mito.thresh = new.arguments$high.mito.thresh,
+		high.umi.thresh = new.arguments$high.umi.thresh,
+		genome = new.arguments$genome,
+		species = new.arguments$species,
+		.sample = !!new.arguments$.sample,
+		.cell = !!new.arguments$.cell
+	) %>%
+
+	# Add parameters attribute
+	add_attr((.) %>% attr("parameters") %>% c(
+		list(
+			.transcript = new.arguments$.transcript,
+			.abundance = new.arguments$.abundance
+		)
+	),
+	"parameters")
 }
 
 
