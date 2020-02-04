@@ -2167,8 +2167,16 @@ get_cell_type_annotation_sc = function(.data) {
 				stop("Species should be either human or mouse, case insensitive")
 			)
 
+	# my assay
+	my_assay =
+		seurat@assays %>%
+		names %>%
+		base::grep("integrated", ., invert = TRUE, value=TRUE) %>%
+		`[` (length(.))
+
+
 	# Test data frame
-	test = seurat@assays["SCT"]$SCT@counts %>% `+` (1) %>% log %>% Matrix::Matrix(sparse = TRUE)
+	test = seurat@assays[[my_assay]]@counts %>% `+` (1) %>% log %>% Matrix::Matrix(sparse = TRUE)
 
 	# Calculate and return
 	ref %>%
@@ -2282,7 +2290,7 @@ get_cell_type_annotation_sc = function(.data) {
 
 		# Join back the nested data
 		left_join(ct_class ) %>%
-		select(-one_of(cluster)) %>%
+		select(-one_of("cluster")) %>%
 
 		# Add back the attributes objects
 		add_attr(seurat_object, "seurat") %>%
@@ -2637,8 +2645,8 @@ get_abundance_sc_long = function(.data, transcripts = NULL, all = F){
 				ifelse2_pipe(
 					variable_genes %>% is.null %>% `!`,
 				transcripts %>% is.null %>% `!`,
-				~ .x@counts[variable_genes,],
-				~ .x@counts[transcripts,],
+				~ .x@data[variable_genes,],
+				~ .x@data[transcripts,],
 				~ stop("It is not convenient to extract all genes, you should have either variable features or transcript list to extract")
 			) %>%
 				as_tibble(rownames = quo_name(.transcript)) %>%
@@ -2654,7 +2662,7 @@ get_abundance_sc_long = function(.data, transcripts = NULL, all = F){
 				add_attr(.data %>% attr("seurat"), "seurat") %>%
 				add_attr(.data %>% attr("parameters"), "parameters")
 		) %>%
-		Reduce(function(...) left_join(..., by=c("transcript", "cell")), .)
+		Reduce(function(...) left_join(..., by=c(quo_name(.transcript), quo_name(.cell))), .)
 
 }
 
