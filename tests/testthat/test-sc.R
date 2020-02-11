@@ -168,7 +168,7 @@ test_that("Add reduced dimensions TSNE",{
 test_that("Get adjusted counts for unwanted variation",{
 
 
-  my_tt =   get_adjusted_counts_for_unwanted_variation_sc(tt, ~ sample + S.Score + G2M.Score + mito.fraction)
+  my_tt =   get_adjusted_counts_for_unwanted_variation_sc(tt, ~ integrate(sample) + S.Score + G2M.Score + mito.fraction)
 
   expect_equal( ncol(my_tt), 3 )
   expect_equal( my_tt$nCount_SCT[1:4], c(11936, 11471, 12267, 12848))
@@ -178,7 +178,7 @@ test_that("Get adjusted counts for unwanted variation",{
 test_that("Add adjusted counts for unwanted variation",{
 
 
-  my_tt =   add_adjusted_counts_for_unwanted_variation_sc(tt, ~ sample + S.Score + G2M.Score + mito.fraction)
+  my_tt =   add_adjusted_counts_for_unwanted_variation_sc(tt, ~ integrate(sample)  + S.Score + G2M.Score + mito.fraction)
 
   expect_equal( ncol(my_tt), 13 )
   expect_equal( my_tt$nCount_SCT[1:4], c(11936, 11471, 12267, 12848))
