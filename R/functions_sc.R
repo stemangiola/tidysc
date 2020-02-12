@@ -1894,7 +1894,10 @@ get_adjusted_counts_for_unwanted_variation_sc = function(.data,
 
 	variables_to_regress_no_sample =
 		variables_to_regress %>%
-		grep(.integrate_column, ., value = T, invert = T) %>%
+		ifelse_pipe(
+			length(.integrate_column) > 0,
+			~ .x %>% grep(.integrate_column, ., value = T, invert = T)
+		) %>%
 		ifelse_pipe( (.) %>% length %>% equals(0), ~ NULL)
 
 	# Check if object normalised already
