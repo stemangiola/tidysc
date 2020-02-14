@@ -2,30 +2,22 @@
 % Please edit documentation in R/methods.R
 \name{test_differential_abundance}
 \alias{test_differential_abundance}
-\title{Add differential transcription information to a tbl using edgeR.}
+\title{Add differential transcription information to a tbl using Seurat}
 \usage{
-test_differential_abundance(
-  .data,
-  .formula,
-  .sample = NULL,
-  .transcript = NULL,
-  .abundance = NULL,
-  significance_threshold = 0.05,
-  action = "add"
-)
+test_differential_abundance(.data, .formula, significance_threshold = 0.05)
 }
 \arguments{
 \item{.data}{A `tbl` formatted as | <SAMPLE> | <TRANSCRIPT> | <COUNT> | <...> |}
 
 \item{.formula}{A formula with no response variable, representing the desired linear model}
 
+\item{significance_threshold}{A real between 0 and 1 (usually 0.05).}
+
 \item{.sample}{The name of the sample column}
 
 \item{.transcript}{The name of the transcript/gene column}
 
 \item{.abundance}{The name of the transcript/gene abundance column}
-
-\item{significance_threshold}{A real between 0 and 1 (usually 0.05).}
 
 \item{action}{A character string. Whether to join the new information to the input tbl (add), or just get the non-redundant tbl with the new information (get).}
 }
