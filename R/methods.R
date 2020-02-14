@@ -1129,7 +1129,7 @@ annotate_symbol.tbl_df = annotate_symbol.ttSc <-
 
 
 
-#' Add differential transcription information to a tbl using edgeR.
+#' Add differential transcription information to a tbl using Seurat
 #'
 #' @description test_differential_abundance() takes as imput a `tbl` formatted as | <SAMPLE> | <TRANSCRIPT> | <COUNT> | <...> | and returns a `tbl` with additional columns for the statistics from the hypothesis test.
 #'
@@ -1173,21 +1173,15 @@ annotate_symbol.tbl_df = annotate_symbol.ttSc <-
 #'
 test_differential_abundance <- function(.data,
                                             .formula,
-                                            .sample = NULL,
-                                            .transcript = NULL,
-                                            .abundance = NULL,
-                                            significance_threshold = 0.05,
-                                            action = "add") {
+
+                                            significance_threshold = 0.05) {
   UseMethod("test_differential_abundance", .data)
 }
 #' @export
 test_differential_abundance.default <-  function(.data,
                                                      .formula,
-                                                     .sample = NULL,
-                                                     .transcript = NULL,
-                                                     .abundance = NULL,
-                                                     significance_threshold = 0.05,
-                                                     action = "add")
+
+                                                     significance_threshold = 0.05)
 {
   print("This function cannot be applied to this object")
 }
@@ -1195,39 +1189,20 @@ test_differential_abundance.default <-  function(.data,
 test_differential_abundance.tbl_df = test_differential_abundance.ttSc <-
   function(.data,
            .formula,
-           .sample = NULL,
-           .transcript = NULL,
-           .abundance = NULL,
-           significance_threshold = 0.05,
-           action = "add")
-  {
-    # Make col names
-    .sample = enquo(.sample)
-    .transcript = enquo(.transcript)
-    .abundance = enquo(.abundance)
 
-    if (action == "add")
-      add_differential_transcript_abundance_sc(
-        .data,
-        .formula,
-        .sample = !!.sample,
-        .transcript = !!.transcript,
-        .abundance = !!.abundance,
-        significance_threshold = significance_threshold
-      )
-    else if (action == "get")
+           significance_threshold = 0.05)
+  {
+
+
       get_differential_transcript_abundance_sc(
         .data,
         .formula,
-        .sample = !!.sample,
-        .transcript = !!.transcript,
-        .abundance = !!.abundance,
+
         significance_threshold = significance_threshold
       )
-    else
-      stop(
-        "action must be either \"add\" for adding this information to your data frame or \"get\" to just get the information"
-      )
+
+
+
   }
 
 #' Add differential transcription information to a tbl using edgeR.
