@@ -1453,7 +1453,7 @@ left_join.ttSc <- function(x, y, by = NULL, copy = FALSE, suffix = c(".x", ".y")
 #' unite columns
 #' @export
 unite <- function(data, col, ..., sep = "_", remove = TRUE, na.rm = FALSE) {
-  UseMethod("mutate")
+  UseMethod("unite")
 }
 
 #' @export

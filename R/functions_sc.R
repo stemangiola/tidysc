@@ -2591,6 +2591,23 @@ mutate_update_and_add_attr = function(.data, ...){
 }
 
 
+#' @export
+unite_update_and_add_attr = function(.data, col, ..., sep = "_", remove = TRUE, na.rm = FALSE){
+
+	# Drop class to use dplyr
+	class(.data) = class(.data)[-c(1:2)]
+
+	tidyr::unite(.data, col, ..., sep = sep, remove = remove, na.rm = na.rm) %>%
+		add_attr(.data %>% attr("seurat"), "seurat") %>%
+		add_attr(.data %>% attr("parameters"), "parameters") %>%
+		update_metadata_sc() %>%
+
+		# Add tt class
+		add_class("tt") %>%
+		add_class("ttSc")
+
+}
+
 filter_update_and_add_attr = function(.data, ...){
 
 	# Drop class to use dplyr
