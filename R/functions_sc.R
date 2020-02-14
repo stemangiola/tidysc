@@ -2177,6 +2177,7 @@ get_cell_type_annotation_sc = function(.data) {
 	# Get references
 	hpca.se <- SingleR::HumanPrimaryCellAtlasData()
 	blueprint <- SingleR::BlueprintEncodeData()
+	MouseRNAseq = MouseRNAseqData()
 
 	# Create ref list
 	ref =
@@ -2185,7 +2186,7 @@ get_cell_type_annotation_sc = function(.data) {
 				.p1 = (.) %>% tolower() %>% equals("human"),
 				.p2 = (.) %>% tolower() %>% equals("mouse"),
 				~ list(hpca = hpca.se, blueprint = blueprint),
-				~ list(MouseRNAseq = MouseRNAseqData()),
+				~ list(MouseRNAseq = MouseRNAseq),
 				stop("Species should be either human or mouse, case insensitive")
 			)
 
