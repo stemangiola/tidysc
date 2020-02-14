@@ -971,14 +971,29 @@ create_tt_from_cellRanger_sc <- function(dir_names,
 		# Eliminate orig.ident column, because same as sample
 		select(-contains("orig.ident")) %>%
 
-		# Add parameters attribute
-		add_attr((.) %>% attr("parameters") %>% c(
-								 	list(
-								 		.transcript = NULL,
-								 		.abundance = NULL
-								 	)
-								 ),
-						 "parameters")
+		# Attach attributes
+
+		add_attr(
+			(.) %>%
+				attr("parameters") %>%
+				c(	.transcript =	(function(x, v) enquo(v))(x, !!as.symbol("transcript"))	),
+			"parameters"
+		) %>%
+		add_attr(
+			(.) %>%
+				attr("parameters") %>%
+				c(	.abundance =	(function(x, v) enquo(v))(x, !!as.symbol("abundance"))	),
+			"parameters"
+		)
+
+		# # Add parameters attribute
+		# add_attr((.) %>% attr("parameters") %>% c(
+		# 						 	list(
+		# 						 		.transcript = NULL,
+		# 						 		.abundance = NULL
+		# 						 	)
+		# 						 ),
+		# 				 "parameters")
 
 		# %>%
 		#
