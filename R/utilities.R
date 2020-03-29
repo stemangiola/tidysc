@@ -245,6 +245,19 @@ add_attr = function(var, attribute, name) {
   var
 }
 
+#' Drop attribute to abject
+#'
+#'
+#' @param var A tibble
+#' @param name A character name of the attribute
+#'
+#' @return A tibble with an additional attribute
+drop_attr = function(var, name) {
+	attr(var, name) <- NULL
+	var
+}
+
+
 #' Remove class to abject
 #'
 #'
