@@ -1,5 +1,7 @@
 #' Creates a `tt` object from a `tbl``
 #'
+#' \lifecycle{experimental}
+#' 
 #' @description tidysc_long() creates a `tt` object from a `tbl` formatted as | <SAMPLE> | <TRANSCRIPT> | <COUNT> | <...> |
 #'
 #' @importFrom rlang enquo
@@ -95,6 +97,8 @@ tidysc_long.tbl_df <- function(.data,
 
 #' Creates a `tt` object from a `tbl``
 #'
+#' \lifecycle{experimental}
+#' 
 #' @description tidysc_wide() creates a `tt` object from a `tbl` formatted as | <SAMPLE> | <TRANSCRIPT> | <COUNT> | <...> |
 #'
 #' @importFrom rlang enquo
@@ -183,6 +187,8 @@ tidysc_wide.tbl_df <- function(.data,
 
 #' Creates a `tt` object from a `tbl``
 #'
+#' \lifecycle{experimental}
+#'
 #' @description tidysc_cell_ranger() creates a `tt` object from a `tbl` formatted as | <SAMPLE> | <TRANSCRIPT> | <COUNT> | <...> |
 #'
 #' @importFrom rlang enquo
@@ -261,6 +267,8 @@ tidysc_cell_ranger.default <- function(dir_names,
 
 #' Normalise the counts of transcripts/genes
 #'
+#' \lifecycle{experimental}
+#'
 #' @description scale_abundance() takes as imput a `tbl` formatted as | <SAMPLE> | <TRANSCRIPT> | <COUNT> | <...> | and normalises the data for the library size (e.g., with TMM algorithm, Robinson and Oshlack doi.org/10.1186/gb-2010-11-3-r25).
 #'
 #' @importFrom rlang enquo
@@ -332,6 +340,8 @@ scale_abundance.tbl_df = scale_abundance.tidysc <-
 
 #' Get clusters of elements (e.g., samples or transcripts)
 #'
+#' \lifecycle{experimental}
+#'
 #' @description cluster_elements() takes as imput a `tbl` formatted as | <SAMPLE> | <TRANSCRIPT> | <COUNT> | <...> | and identify clusters in the data. It uses the function Seurat::FindClusters to identify clusters.
 #'
 #' @importFrom rlang enquo
@@ -398,6 +408,8 @@ cluster_elements.tidysc <-  function(.data,
 
 
 #' Dimension reduction of the transcript abundance data
+#'
+#' \lifecycle{experimental}
 #'
 #' @description reduce_dimensions() takes as imput a `tbl` formatted as | <SAMPLE> | <TRANSCRIPT> | <COUNT> | <...> | and calculates the reduced dimensional space of the transcript abundance.
 #'
@@ -528,6 +540,8 @@ reduce_dimensions.tidysc <-
 
 #' Rotate two dimensions (e.g., principal .dims) of an arbitrary angle
 #'
+#' \lifecycle{experimental}
+#'
 #' @description rotate_dimensions() takes as imput a `tbl` formatted as | <DIMENSION 1> | <DIMENSION 2> | <...> | and calculates the rotated dimensional space of the transcript abundance.
 #'
 #' @importFrom rlang enquo
@@ -640,6 +654,8 @@ rotate_dimensions.tbl_df = rotate_dimensions.tidysc <-
 
 
 #' Drop redundant elements (e.g., samples) for which feature (e.g., transcript/gene) aboundances are correlated
+#'
+#' \lifecycle{experimental}
 #'
 #' @description remove_redundancy() takes as imput a `tbl` formatted as | <SAMPLE> | <TRANSCRIPT> | <COUNT> | <...> | for correlation method or | <DIMENSION 1> | <DIMENSION 2> | <...> | for reduced_dimensions method, and returns a `tbl` with dropped elements (e.g., samples).
 #'
@@ -780,6 +796,8 @@ remove_redundancy.tbl_df = remove_redundancy.tidysc <-  function(.data,
 
 #' Adjust transcript abundance for unwanted variation
 #'
+#' \lifecycle{experimental}
+#'
 #' @description adjust_abundance() takes as imput a `tbl` formatted as | <SAMPLE> | <TRANSCRIPT> | <COUNT> | <...> | and returns a `tbl` with an edditional adjusted abundance column..
 #'
 #' @importFrom rlang enquo
@@ -875,6 +893,8 @@ adjust_abundance.tbl_df = adjust_abundance.tidysc <-
 
 
 #' Aggregates multiple counts from the same samples (e.g., from isoforms), concatenates other character columns, and averages other numeric columns
+#'
+#' \lifecycle{experimental}
 #'
 #' @description aggregate_duplicates() takes as imput a `tbl` formatted as | <SAMPLE> | <TRANSCRIPT> | <COUNT> | <...> | and returns a `tbl` with aggregated transcripts that were duplicated.
 #'
@@ -995,6 +1015,8 @@ aggregate_duplicates.tbl_df = aggregate_duplicates.tidysc <-
 
 #' Get cell type proportions from samples
 #'
+#' \lifecycle{experimental}
+#'
 #' @description deconvolve_cellularity() takes as imput a `tbl` formatted as | <SAMPLE> | <TRANSCRIPT> | <COUNT> | <...> | and returns a `tbl` with the estimated cell type abundance for each sample
 #'
 #' @importFrom rlang enquo
@@ -1059,6 +1081,8 @@ deconvolve_cellularity.tbl_df = deconvolve_cellularity.tidysc <-
 
 
 #' Add transcript symbol column from ensembl id
+#'
+#' \lifecycle{experimental}
 #'
 #' @description annotate_symbol() takes as imput a `tbl` formatted as | <SAMPLE> | <ENSEMBL_ID> | <COUNT> | <...> | and returns a `tbl` with the the additional transcript symbol column
 #'
@@ -1130,6 +1154,8 @@ annotate_symbol.tbl_df = annotate_symbol.tidysc <-
 
 
 #' Add differential transcription information to a tbl using Seurat
+#'
+#' \lifecycle{experimental}
 #'
 #' @description test_differential_abundance() takes as imput a `tbl` formatted as | <SAMPLE> | <TRANSCRIPT> | <COUNT> | <...> | and returns a `tbl` with additional columns for the statistics from the hypothesis test.
 #'
@@ -1206,6 +1232,8 @@ test_differential_abundance.tbl_df = test_differential_abundance.tidysc <-
   }
 
 #' Add differential transcription information to a tbl using edgeR.
+#'
+#' \lifecycle{experimental}
 #'
 #' @description extract_abundance() takes as imput a `tbl` formatted as | <SAMPLE> | <TRANSCRIPT> | <COUNT> | <...> | and returns a `tbl` with additional columns for the statistics from the hypothesis test.
 #'
