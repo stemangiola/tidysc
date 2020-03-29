@@ -1,12 +1,12 @@
 #' Creates a `tt` object from a `tbl``
 #'
-#' @description ttSc_long() creates a `tt` object from a `tbl` formatted as | <SAMPLE> | <TRANSCRIPT> | <COUNT> | <...> |
+#' @description tidysc_long() creates a `tt` object from a `tbl` formatted as | <SAMPLE> | <TRANSCRIPT> | <COUNT> | <...> |
 #'
 #' @importFrom rlang enquo
 #' @importFrom magrittr "%>%"
 #'
-#' @name ttSc
-#' @rdname ttSc
+#' @name tidysc
+#' @rdname tidysc
 #'
 #' @param .data A `tbl` formatted as | <SAMPLE> | <TRANSCRIPT> | <COUNT> | <...> |
 #' @param .sample The name of the sample column
@@ -14,12 +14,12 @@
 #' @param .transcript The name of the transcript/gene column
 #' @param .abundance The name of the transcript/gene abundance column
 #'
-#' @details This function created a ttSc object and is useful if you want
+#' @details This function created a tidysc object and is useful if you want
 #' to avoid to specify .sample, .transcript and .abundance arguments all the times.
-#' The ttSc object have an attribute called parameters where these three
+#' The tidysc object have an attribute called parameters where these three
 #' arguments are stored as metadata. They can be extracted as attr(<object>, "parameters").
 #'
-#' @return A `ttSc` object
+#' @return A `tidysc` object
 #'
 #'
 #' @examples
@@ -28,15 +28,15 @@
 #'
 #'
 #' my_tt =
-#'     ttSc::counts %>%
-#'     ttSc(sample, transcript, counts)
+#'     tidysc::counts %>%
+#'     tidysc(sample, transcript, counts)
 #'
 #' class(my_tt)
 #'
 #' }
 #'
 #' @export
-ttSc_long <- function(.data,
+tidysc_long <- function(.data,
                       .sample,
                       .cell,
                       .transcript,
@@ -45,10 +45,10 @@ ttSc_long <- function(.data,
                       min.transcripts = 400,
                       min.cells = 5,
                       ...) {
-  UseMethod("ttSc_long", .data)
+  UseMethod("tidysc_long", .data)
 }
 #' @export
-ttSc_long.default <- function(.data,
+tidysc_long.default <- function(.data,
                               .sample,
                               .cell,
 
@@ -62,7 +62,7 @@ ttSc_long.default <- function(.data,
   print("This function cannot be applied to this object")
 }
 #' @export
-ttSc_long.tbl_df <- function(.data,
+tidysc_long.tbl_df <- function(.data,
                              .sample,
                              .cell,
 
@@ -95,13 +95,13 @@ ttSc_long.tbl_df <- function(.data,
 
 #' Creates a `tt` object from a `tbl``
 #'
-#' @description ttSc_wide() creates a `tt` object from a `tbl` formatted as | <SAMPLE> | <TRANSCRIPT> | <COUNT> | <...> |
+#' @description tidysc_wide() creates a `tt` object from a `tbl` formatted as | <SAMPLE> | <TRANSCRIPT> | <COUNT> | <...> |
 #'
 #' @importFrom rlang enquo
 #' @importFrom magrittr "%>%"
 #'
-#' @name ttSc
-#' @rdname ttSc
+#' @name tidysc
+#' @rdname tidysc
 #'
 #' @param .data A `tbl` formatted as | <SAMPLE> | <TRANSCRIPT> | <COUNT> | <...> |
 #' @param .sample The name of the sample column
@@ -109,12 +109,12 @@ ttSc_long.tbl_df <- function(.data,
 #' @param .transcript The name of the transcript/gene column
 #' @param .abundance The name of the transcript/gene abundance column
 #'
-#' @details This function created a ttSc object and is useful if you want
+#' @details This function created a tidysc object and is useful if you want
 #' to avoid to specify .sample, .transcript and .abundance arguments all the times.
-#' The ttSc object have an attribute called parameters where these three
+#' The tidysc object have an attribute called parameters where these three
 #' arguments are stored as metadata. They can be extracted as attr(<object>, "parameters").
 #'
-#' @return A `ttSc` object
+#' @return A `tidysc` object
 #'
 #'
 #' @examples
@@ -123,15 +123,15 @@ ttSc_long.tbl_df <- function(.data,
 #'
 #'
 #' my_tt =
-#'     ttSc::counts %>%
-#'     ttSc(sample, transcript, counts)
+#'     tidysc::counts %>%
+#'     tidysc(sample, transcript, counts)
 #'
 #' class(my_tt)
 #'
 #' }
 #'
 #' @export
-ttSc_wide <- function(.data,
+tidysc_wide <- function(.data,
                       .sample,
                       .cell,
                       .transcript_position,
@@ -139,10 +139,10 @@ ttSc_wide <- function(.data,
                       min.transcripts = 400,
                       min.cells = 5,
                       ...) {
-  UseMethod("ttSc_wide", .data)
+  UseMethod("tidysc_wide", .data)
 }
 #' @export
-ttSc_wide.default <- function(.data,
+tidysc_wide.default <- function(.data,
                               .sample,
                               .cell,
                               .transcript_position,
@@ -154,7 +154,7 @@ ttSc_wide.default <- function(.data,
   print("This function cannot be applied to this object")
 }
 #' @export
-ttSc_wide.tbl_df <- function(.data,
+tidysc_wide.tbl_df <- function(.data,
                              .sample,
                              .cell,
                              .transcript_position,
@@ -183,25 +183,25 @@ ttSc_wide.tbl_df <- function(.data,
 
 #' Creates a `tt` object from a `tbl``
 #'
-#' @description ttSc_cell_ranger() creates a `tt` object from a `tbl` formatted as | <SAMPLE> | <TRANSCRIPT> | <COUNT> | <...> |
+#' @description tidysc_cell_ranger() creates a `tt` object from a `tbl` formatted as | <SAMPLE> | <TRANSCRIPT> | <COUNT> | <...> |
 #'
 #' @importFrom rlang enquo
 #' @importFrom magrittr "%>%"
 #'
-#' @name ttSc
-#' @rdname ttSc
+#' @name tidysc
+#' @rdname tidysc
 #'
 #' @param .data A `tbl` formatted as | <SAMPLE> | <TRANSCRIPT> | <COUNT> | <...> |
 #' @param .sample The name of the sample column
 #' @param .transcript The name of the transcript/gene column
 #' @param .abundance The name of the transcript/gene abundance column
 #'
-#' @details This function created a ttSc object and is useful if you want
+#' @details This function created a tidysc object and is useful if you want
 #' to avoid to specify .sample, .transcript and .abundance arguments all the times.
-#' The ttSc object have an attribute called parameters where these three
+#' The tidysc object have an attribute called parameters where these three
 #' arguments are stored as metadata. They can be extracted as attr(<object>, "parameters").
 #'
-#' @return A `ttSc` object
+#' @return A `tidysc` object
 #'
 #'
 #' @examples
@@ -210,25 +210,25 @@ ttSc_wide.tbl_df <- function(.data,
 #'
 #'
 #' my_tt =
-#'     ttSc::counts %>%
-#'     ttSc(sample, transcript, counts)
+#'     tidysc::counts %>%
+#'     tidysc(sample, transcript, counts)
 #'
 #' class(my_tt)
 #'
 #' }
 #'
 #' @export
-ttSc_cell_ranger <- function(dir_names,
+tidysc_cell_ranger <- function(dir_names,
                              min.transcripts = 400,
                              min.cells = 5,
                              high.mito.thresh = 0.08,
                              high.umi.thresh = 10000,
                              species,
                              genome = ifelse(species == "Human", "hg38", "mm10")) {
-  UseMethod("ttSc_cell_ranger", .data)
+  UseMethod("tidysc_cell_ranger", .data)
 }
 #' #' @export
-#' ttSc_cell_ranger.default <- function(dir_names,
+#' tidysc_cell_ranger.default <- function(dir_names,
 #'                                      min.transcripts = 400,
 #'                                      min.cells = 5,
 #'                                      high.mito.thresh = 0.08,
@@ -239,7 +239,7 @@ ttSc_cell_ranger <- function(dir_names,
 #'   print("This function cannot be applied to this object")
 #' }
 #' @export
-ttSc_cell_ranger.default <- function(dir_names,
+tidysc_cell_ranger.default <- function(dir_names,
                                     min.transcripts = 400,
                                     min.cells = 5,
                                     high.mito.thresh = 0.08,
@@ -314,7 +314,7 @@ scale_abundance.default <-  function(.data,
   print("This function cannot be applied to this object")
 }
 #' @export
-scale_abundance.tbl_df = scale_abundance.ttSc <-
+scale_abundance.tbl_df = scale_abundance.tidysc <-
   function(.data,
            verbose = TRUE,
            action = "add")
@@ -346,7 +346,7 @@ scale_abundance.tbl_df = scale_abundance.ttSc <-
 #' @param .value The name of the column including the numerical value the clustering is based on (normally transcript abundance)
 #'
 #' @param method A character string. The cluster algorithm to use, ay the moment k-means is the only algorithm included.
-#' @param of_samples A boolean. In case the input is a ttSc object, it indicates Whether the element column will be sample or transcript column
+#' @param of_samples A boolean. In case the input is a tidysc object, it indicates Whether the element column will be sample or transcript column
 #' @param log_transform A boolean, whether the value should be log-transformed (e.g., TRUE for RNA sequencing data)
 #' @param action A character string. Whether to join the new information to the input tbl (add), or just get the non-redundant tbl with the new information (get).
 #' @param ... Further parameters passed to the function kmeans
@@ -383,7 +383,7 @@ cluster_elements.default <-  function(.data,
 }
 
 #' @export
-cluster_elements.ttSc <-  function(.data,
+cluster_elements.tidysc <-  function(.data,
                                     action = "add", ...)
 {
   if (action == "add")
@@ -414,7 +414,7 @@ cluster_elements.ttSc <-  function(.data,
 #'
 #' @param method A character string. The dimension reduction algorithm to use (PCA, MDS, tSNE).
 #' @param top An integer. How many top genes to select for dimensionality reduction
-#' @param of_samples A boolean. In case the input is a ttSc object, it indicates Whether the element column will be sample or transcript column
+#' @param of_samples A boolean. In case the input is a tidysc object, it indicates Whether the element column will be sample or transcript column
 #' @param .dims A list of integer vectors corresponding to principal .dims of interest (e.g., list(1:2, 3:4, 5:6))
 
 #' @param log_transform A boolean, whether the value should be log-transformed (e.g., TRUE for RNA sequencing data)
@@ -475,7 +475,7 @@ reduce_dimensions.default <-
   }
 
 #' @export
-reduce_dimensions.ttSc <-
+reduce_dimensions.tidysc <-
   function(.data,
            method,
            .dims = 10,
@@ -542,7 +542,7 @@ reduce_dimensions.ttSc <-
 #' @param dimension_1_column A character string. The column of the dimension 1
 #' @param dimension_2_column  A character string. The column of the dimension 2
 #' @param rotation_degrees A real number between 0 and 360
-#' @param of_samples A boolean. In case the input is a ttSc object, it indicates Whether the element column will be sample or transcript column
+#' @param of_samples A boolean. In case the input is a tidysc object, it indicates Whether the element column will be sample or transcript column
 #' @param dimension_1_column_rotated A character string. The column of the rotated dimension 1 (optional)
 #' @param dimension_2_column_rotated A character string. The column of the rotated dimension 2 (optional)
 #' @param action A character string. Whether to join the new information to the input tbl (add), or just get the non-redundant tbl with the new information (get).
@@ -594,7 +594,7 @@ rotate_dimensions.default <-  function(.data,
 }
 
 #' @export
-rotate_dimensions.tbl_df = rotate_dimensions.ttSc <-
+rotate_dimensions.tbl_df = rotate_dimensions.tidysc <-
   function(.data,
            dimension_1_column,
            dimension_2_column,
@@ -655,7 +655,7 @@ rotate_dimensions.tbl_df = rotate_dimensions.ttSc <-
 #' @param .value The name of the column including the numerical value the clustering is based on (normally transcript abundance)
 #'
 #' @param method A character string. The cluster algorithm to use, ay the moment k-means is the only algorithm included.
-#' @param of_samples A boolean. In case the input is a ttSc object, it indicates Whether the element column will be sample or transcript column
+#' @param of_samples A boolean. In case the input is a tidysc object, it indicates Whether the element column will be sample or transcript column
 #' @param log_transform A boolean, whether the value should be log-transformed (e.g., TRUE for RNA sequencing data)
 #' @param correlation_threshold A real number between 0 and 1. For correlation based calculation.
 #' @param Dim_a_column A character string. For reduced_dimension based calculation. The column of one principal component
@@ -727,7 +727,7 @@ remove_redundancy.default <-  function(.data,
   print("This function cannot be applied to this object")
 }
 #' @export
-remove_redundancy.tbl_df = remove_redundancy.ttSc <-  function(.data,
+remove_redundancy.tbl_df = remove_redundancy.tidysc <-  function(.data,
                                                          .element = NULL,
                                                          .feature = NULL,
                                                          .value,
@@ -838,7 +838,7 @@ adjust_abundance.default <-  function(.data,
   print("This function cannot be applied to this object")
 }
 #' @export
-adjust_abundance.tbl_df = adjust_abundance.ttSc <-
+adjust_abundance.tbl_df = adjust_abundance.tidysc <-
   function(.data,
            .formula,
            do.scale = F,
@@ -950,7 +950,7 @@ aggregate_duplicates.default <-  function(.data,
 }
 
 #' @export
-aggregate_duplicates.tbl_df = aggregate_duplicates.ttSc <-
+aggregate_duplicates.tbl_df = aggregate_duplicates.tidysc <-
   function(.data,
            aggregation_function = sum,
            .sample = NULL,
@@ -1042,7 +1042,7 @@ deconvolve_cellularity.default <-  function(.data,
   print("This function cannot be applied to this object")
 }
 #' @export
-deconvolve_cellularity.tbl_df = deconvolve_cellularity.ttSc <-
+deconvolve_cellularity.tbl_df = deconvolve_cellularity.tidysc <-
   function(.data,
            action = "add")  {
 
@@ -1105,7 +1105,7 @@ annotate_symbol.default <-  function(.data,
   print("This function cannot be applied to this object")
 }
 #' @export
-annotate_symbol.tbl_df = annotate_symbol.ttSc <-
+annotate_symbol.tbl_df = annotate_symbol.tidysc <-
   function(.data,
            .ensembl,
            action = "add")
@@ -1186,7 +1186,7 @@ test_differential_abundance.default <-  function(.data,
   print("This function cannot be applied to this object")
 }
 #' @export
-test_differential_abundance.tbl_df = test_differential_abundance.ttSc <-
+test_differential_abundance.tbl_df = test_differential_abundance.tidysc <-
   function(.data,
            .formula,
 
@@ -1265,7 +1265,7 @@ extract_abundance.default <-
     print("This function cannot be applied to this object")
   }
 #' @export
-extract_abundance.ttSc <-
+extract_abundance.tidysc <-
   function(.data,
            transcripts = NULL,
            all = F,
@@ -1329,7 +1329,7 @@ bind_rows.default <-  function(...)
 }
 
 #' @export
-bind_rows.ttSc <- function(...)
+bind_rows.tidysc <- function(...)
 {
 	tts = dplyr:::flatten_bindable(rlang::dots_values(...))
 
@@ -1390,7 +1390,7 @@ mutate.default <-  function(.data, ...)
 }
 
 #' @export
-mutate.ttSc <- function(.data, ...)
+mutate.tidysc <- function(.data, ...)
 {
   mutate_update_and_add_attr(.data, ...)
 }
@@ -1407,7 +1407,7 @@ left_join.default <-  function (x, y, by = NULL, copy = FALSE, suffix = c(".x", 
   dplyr::left_join(x, y, by = by, copy = copy, suffix = suffix, ...)
 }
 #' @export
-left_join.ttSc <- function(x, y, by = NULL, copy = FALSE, suffix = c(".x", ".y"),    ...)
+left_join.tidysc <- function(x, y, by = NULL, copy = FALSE, suffix = c(".x", ".y"),    ...)
 {
 
   # Drop class to use dplyr
@@ -1420,7 +1420,7 @@ left_join.ttSc <- function(x, y, by = NULL, copy = FALSE, suffix = c(".x", ".y")
 
     # Add tt class
     add_class("tt") %>%
-    add_class("ttSc")
+    add_class("tidysc")
 
 
 }
@@ -1438,7 +1438,7 @@ unite.default <-  function(data, col, ..., sep = "_", remove = TRUE, na.rm = FAL
 }
 
 #' @export
-unite.ttSc <- function(data, col, ..., sep = "_", remove = TRUE, na.rm = FALSE)
+unite.tidysc <- function(data, col, ..., sep = "_", remove = TRUE, na.rm = FALSE)
 {
   unite_update_and_add_attr(data, col, ..., sep = sep, remove = remove, na.rm = na.rm)
 }
@@ -1498,7 +1498,7 @@ unite.ttSc <- function(data, col, ..., sep = "_", remove = TRUE, na.rm = FALSE)
 #' @examples
 #'
 #' # Learn more in ?dplyr_tidy_eval
-############# START ADDED ttSc #####################################
+############# START ADDED tidysc #####################################
 #' @export
 filter <- function (.data, ..., .preserve = FALSE)  {
   UseMethod("filter")
@@ -1511,11 +1511,11 @@ filter.default <-  function (.data, ..., .preserve = FALSE)
 }
 
 #' @export
-filter.ttSc <- function (.data, ..., .preserve = FALSE)
+filter.tidysc <- function (.data, ..., .preserve = FALSE)
 {
 
   .data %>%
-    drop_class(c("ttSc", "tt")) %>%
+    drop_class(c("tidysc", "tt")) %>%
     dplyr::filter( ..., .preserve = .preserve) %>%
 
     # Update seurat
@@ -1523,6 +1523,6 @@ filter.ttSc <- function (.data, ..., .preserve = FALSE)
 
     # Add class
     add_class("tt") %>%
-    add_class("ttSc")
+    add_class("tidysc")
 
 }

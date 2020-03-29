@@ -29,7 +29,7 @@ nest.tidybulk <- function (.data, ...)
 	warning("nest is not fully supported yet by tidysc. The nested data frame has been reverted to tbl_df")
 
 	.data %>%
-		drop_class(c("ttSc", "tt")) %>%
+		drop_class(c("tidysc", "tt")) %>%
 		tidyr::nest(...)
 
 	#   %>%

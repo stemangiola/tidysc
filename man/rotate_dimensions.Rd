@@ -24,7 +24,7 @@ rotate_dimensions(
 
 \item{rotation_degrees}{A real number between 0 and 360}
 
-\item{of_samples}{A boolean. In case the input is a ttSc object, it indicates Whether the element column will be sample or transcript column}
+\item{of_samples}{A boolean. In case the input is a tidysc object, it indicates Whether the element column will be sample or transcript column}
 
 \item{dimension_1_column_rotated}{A character string. The column of the rotated dimension 1 (optional)}
 

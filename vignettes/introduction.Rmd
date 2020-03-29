@@ -1,14 +1,14 @@
 ---
-title: "Overview of the ttSc package"
+title: "Overview of the tidysc package"
 author: "Stefano Mangiola"
 date: "`r Sys.Date()`"
-package: ttSc
+package: tidysc
 output:
   BiocStyle::html_document:
     toc_float: true
 vignette: >
   %\VignetteEngine{knitr::knitr}
-  %\VignetteIndexEntry{Overview of the ttSc package}
+  %\VignetteIndexEntry{Overview of the tidysc package}
   %\usepackage[UTF-8]{inputenc}
 ---
 
@@ -38,7 +38,7 @@ library(widyr)
 library(foreach)
 library(rlang) 
 library(purrr)
-library(ttSc)
+library(tidysc)
 
 my_theme = 	
 	theme_bw() +
@@ -56,8 +56,8 @@ my_theme =
 	)
 
 # counts = 
-# 	ttSc::counts %>% 
-# 	filter(transcript %in% (ttSc::X_cibersort %>% rownames)) %>% 
+# 	tidysc::counts %>% 
+# 	filter(transcript %in% (tidysc::X_cibersort %>% rownames)) %>% 
 # 	filter(sample %in% c("SRR1740034", "SRR1740035", "SRR1740058", "SRR1740043", "SRR1740067")) %>%
 # 	mutate(condition = ifelse(sample %in% c("SRR1740034", "SRR1740035", "SRR1740058"), T, F))
 
@@ -68,7 +68,7 @@ my_theme =
 
 # Introduction
 
-ttSc is a collection of wrapper functions for bulk tanscriptomic analyses that follows the "tidy" paradigm. The data structure is a tibble with columns for 
+tidysc is a collection of wrapper functions for bulk tanscriptomic analyses that follows the "tidy" paradigm. The data structure is a tibble with columns for 
 
 + sample identifier column
 + transcript identifier column
@@ -76,7 +76,7 @@ ttSc is a collection of wrapper functions for bulk tanscriptomic analyses that f
 + annotation (and other info) columns
 
 ```{r}
-counts = ttSc::counts 
+counts = tidysc::counts 
 counts 
 ```
 
@@ -96,7 +96,7 @@ In brief you can:
 
 # Aggregate `transcripts`
 
-ttSc provide the `aggregate_duplicates` function to aggregate duplicated transcripts (e.g., isoforms, ensembl). For example, we often have to convert ensembl symbols to gene/transcript symbol, but in doing so we have to deal with duplicates. `aggregate_duplicates` takes a tibble and column names (as symbols; for `sample`, `transcript` and `count`) as arguments and returns a tibble with aggregate transcript with the same name. All the rest of the column are appended, and factors and boolean are appended as characters.
+tidysc provide the `aggregate_duplicates` function to aggregate duplicated transcripts (e.g., isoforms, ensembl). For example, we often have to convert ensembl symbols to gene/transcript symbol, but in doing so we have to deal with duplicates. `aggregate_duplicates` takes a tibble and column names (as symbols; for `sample`, `transcript` and `count`) as arguments and returns a tibble with aggregate transcript with the same name. All the rest of the column are appended, and factors and boolean are appended as characters.
 
 ```{r aggregate, cache=TRUE}
 counts.aggr = 
@@ -117,7 +117,7 @@ counts.aggr
 
 ```{r create, cache=TRUE}
 tt =
-  ttSc_long(
+  tidysc_long(
     counts.aggr,
     .sample = sample,
     .cell = cell,
@@ -413,7 +413,7 @@ The above wrapper streamline the most common processing of bulk RNA sequencing d
 We can calculate gene counts (using FeatureCounts; Liao Y et al., 10.1093/nar/gkz114) from a list of BAM/SAM files and format them into a tidy structure (similar to counts).
 
 ```{r eval=FALSE}
-counts = ttSc_cell_ranger(
+counts = tidysc_cell_ranger(
 	dir_names = "=filtered_feature_bc_matrix/",
 	species = "Human"
 )

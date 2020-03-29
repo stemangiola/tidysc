@@ -3,7 +3,7 @@ context('Single cell functions')
 # Build tt object
 tt =
   create_tt_from_tibble_sc(
-    ttSc:: counts,
+    tidysc:: counts,
     .sample = sample,
     .cell = cell,
     .transcript = transcript,
@@ -11,7 +11,7 @@ tt =
     species = "Human"
   )
 
-test_that("Test data frame",{ expect_equal( ncol(ttSc::counts), 6 ) })
+test_that("Test data frame",{ expect_equal( ncol(tidysc::counts), 6 ) })
 
 test_that("Create tt object from tibble",{
 

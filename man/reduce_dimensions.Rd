@@ -23,7 +23,7 @@ reduce_dimensions(.data, method, .dims = 10, action = "add")
 
 \item{top}{An integer. How many top genes to select for dimensionality reduction}
 
-\item{of_samples}{A boolean. In case the input is a ttSc object, it indicates Whether the element column will be sample or transcript column}
+\item{of_samples}{A boolean. In case the input is a tidysc object, it indicates Whether the element column will be sample or transcript column}
 
 \item{log_transform}{A boolean, whether the value should be log-transformed (e.g., TRUE for RNA sequencing data)}
 

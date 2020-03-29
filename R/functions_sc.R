@@ -336,7 +336,7 @@ create_tt_from_seurat = function(seurat_object,
 
 		# Add tt class
 		add_class("tt") %>%
-		add_class("ttSc") %>%
+		add_class("tidysc") %>%
 
 		# Filter dead cells
 		mutate(low_quality =  !(`count total` > 200 & `mito.fraction` < 0.1))
@@ -1876,7 +1876,7 @@ get_adjusted_counts_for_unwanted_variation_sc = function(.data,
 
 	# Check if there are column names x or y and stop
 	if(.data %>% colnames %in% c("x", "y") %>% any)
-		stop("ttSc says: column named \"x\" or \"y\" are banned from seurat metadata because will crash the SCTransform function.")
+		stop("tidysc says: column named \"x\" or \"y\" are banned from seurat metadata because will crash the SCTransform function.")
 
 	# Check if package is installed, otherwise install
 	if ("benchmarkme" %in% rownames(installed.packages()) == FALSE) {
@@ -2585,7 +2585,7 @@ mutate_update_and_add_attr = function(.data, ...){
 
 		# Add tt class
 		add_class("tt") %>%
-		add_class("ttSc")
+		add_class("tidysc")
 
 }
 
@@ -2603,7 +2603,7 @@ unite_update_and_add_attr = function(.data, col, ..., sep = "_", remove = TRUE, 
 
 		# Add tt class
 		add_class("tt") %>%
-		add_class("ttSc")
+		add_class("tidysc")
 
 }
 
@@ -2617,7 +2617,7 @@ filter_update_and_add_attr = function(.data, ...){
 
 		# Add tt class
 		add_class("tt") %>%
-		add_class("ttSc")
+		add_class("tidysc")
 
 	# %>%
 	# 	add_attr(.data %>% attr("seurat"), "seurat") %>%
@@ -2695,7 +2695,7 @@ get_abundance_sc_long = function(.data, transcripts = NULL, all = F){
 				# Add back class
 				# Add tt class
 				add_class("tt") %>%
-				add_class("ttSc") %>%
+				add_class("tidysc") %>%
 
 				# Add back the attributes objects
 				add_attr(.data %>% attr("seurat"), "seurat") %>%
@@ -2794,7 +2794,7 @@ get_abundance_sc_wide = function(.data, transcripts = NULL, all = F){
  	# Add back class
  	# Add tt class
  	add_class("tt") %>%
- 	add_class("ttSc") %>%
+ 	add_class("tidysc") %>%
 
  	# Add back the attributes objects
  	add_attr(.data %>% attr("seurat"), "seurat") %>%

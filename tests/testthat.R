@@ -1,4 +1,4 @@
 library(testthat)
-library(ttSc)
+library(tidysc)
 
-test_check("ttSc")
+test_check("tidysc")

@@ -1,10 +1,10 @@
-ttSc - tidyTranscriptomics
+tidysc - tidyTranscriptomics
 ================
 
 [![Build
-Status](https://travis-ci.org/stemangiola/ttSc.svg?branch=master)](https://travis-ci.org/stemangiola/ttSc)
+Status](https://travis-ci.org/stemangiola/tidysc.svg?branch=master)](https://travis-ci.org/stemangiola/tidysc)
 [![Coverage
-Status](https://coveralls.io/repos/github/stemangiola/ttSc/badge.svg?branch=master)](https://coveralls.io/github/stemangiola/ttSc?branch=master)
+Status](https://coveralls.io/repos/github/stemangiola/tidysc/badge.svg?branch=master)](https://coveralls.io/github/stemangiola/tidysc?branch=master)
 
 A user-friendly grammar of bulk RNA sequencing data exploration and
 processing
@@ -13,7 +13,7 @@ processing
 
 # Introduction
 
-ttSc is a collection of wrapper functions for bulk tanscriptomic
+tidysc is a collection of wrapper functions for bulk tanscriptomic
 analyses that follows the “tidy” paradigm. The data structure is a
 tibble with columns for
 
@@ -25,7 +25,7 @@ tibble with columns for
 <!-- end list -->
 
 ``` r
-counts = ttSc::counts 
+counts = tidysc::counts 
 counts 
 ```
 
@@ -55,7 +55,7 @@ tissue composition (Cibersort)
 
 # Aggregate `transcripts`
 
-ttSc provide the `aggregate_duplicates` function to aggregate duplicated
+tidysc provide the `aggregate_duplicates` function to aggregate duplicated
 transcripts (e.g., isoforms, ensembl). For example, we often have to
 convert ensembl symbols to gene/transcript symbol, but in doing so we
 have to deal with duplicates. `aggregate_duplicates` takes a tibble and
@@ -104,7 +104,7 @@ counts.aggr
 
 ``` r
 tt =
-  ttSc_long(
+  tidysc_long(
     counts.aggr,
     .sample = sample,
     .cell = cell,
@@ -656,7 +656,7 @@ We can calculate gene counts (using FeatureCounts; Liao Y et al.,
 tidy structure (similar to counts).
 
 ``` r
-counts = ttSc_cell_ranger(
+counts = tidysc_cell_ranger(
     dir_names = "=filtered_feature_bc_matrix/",
     species = "Human"
 )
