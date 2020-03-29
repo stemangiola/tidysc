@@ -13,7 +13,7 @@ biocViews:
 Biarch: true
 Depends: 
     R (>= 3.5.0)
-Imports: tibble, dplyr, magrittr, tidyr, ggplot2, readr, widyr, foreach, rlang, purrr, furrr,Matrix, devtools  
+Imports: tibble, dplyr, magrittr, tidyr, ggplot2, readr, widyr, foreach, rlang, purrr, furrr,Matrix, devtools, RANN  
 Suggests: 
     parallel,
     testthat,
