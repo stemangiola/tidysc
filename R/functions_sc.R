@@ -328,10 +328,6 @@ create_tt_from_seurat = function(seurat_object,
 			~ .x %>% add_mitochndrion_transcription_abundance_sc(.cell = !!.cell)
 		) %>%
 
-		# Filter dead cells
-		filter(`count total` > 200 & `mito.fraction` < 0.1) %>%
-		update_object_sc(!!.cell) %>%
-
 		# Add cell cycle information
 		ifelse_pipe(
 			!("Phase" %in% ((.) %>% attr("seurat") %>% `[[` (1) %>% `@` (meta.data) %>% colnames)),
@@ -340,7 +336,10 @@ create_tt_from_seurat = function(seurat_object,
 
 		# Add tt class
 		add_class("tt") %>%
-		add_class("ttSc")
+		add_class("ttSc") %>%
+
+		# Filter dead cells
+		mutate(low_quality =  !(`count total` > 200 & `mito.fraction` < 0.1))
 
 }
 
