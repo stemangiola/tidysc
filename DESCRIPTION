@@ -26,11 +26,12 @@ Imports:
     Matrix,
     devtools,
     RANN,
-    lifecycle
+    lifecycle,
+    Seurat,
+    SingleR
 Suggests: 
     parallel,
     testthat,
-    Seurat,
     benchmarkme
 RdMacros: 
     lifecycle

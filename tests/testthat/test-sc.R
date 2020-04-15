@@ -1,21 +1,24 @@
 context('Single cell functions')
 
+`%>%` = magrittr::`%>%`
+  
 # Build tt object
 tt =
-  create_tt_from_tibble_sc(
-    tidysc:: counts,
+  tidysc_long(
+    tidysc::counts,
     .sample = sample,
     .cell = cell,
     .transcript = transcript,
-    .abundance = `count`,
+    .abundance = count,
     species = "Human"
-  )
+  ) %>%
+  filter(!low_quality)
 
 test_that("Test data frame",{ expect_equal( ncol(tidysc::counts), 6 ) })
 
 test_that("Create tt object from tibble",{
 
-  expect_equal( ncol(tt), 11 )
+  expect_equal( ncol(tt), 12 )
 
   expect_equal( typeof(attr(tt, "parameters")), "list")
 
@@ -40,187 +43,75 @@ test_that("Create tt object from tibble",{
 #
 # })
 
-test_that("Get mitochondrial abundance",{
+tt_scaled = scale_abundance(tt)
 
-  my_tt = get_mitochndrion_transcription_abundance_sc(tt, cell)
+test_that("Get scaled counts",{
 
-  expect_equal( ncol(my_tt), 3 )
-  expect_equal( my_tt$cell[1:4], c("D101_43_1", "D101_5_1" , "D101_50_1", "D101_51_1"))
-
-})
-
-test_that("Add mitochondrial abundance",{
-
-  my_tt =  add_mitochndrion_transcription_abundance_sc(tt, cell)
-
-  expect_equal( ncol(my_tt), 3 )
-  expect_equal( my_tt$cell[1:4], c("D101_43_1", "D101_5_1" , "D101_50_1", "D101_51_1"))
-
-})
-
-test_that("Get normalised counts",{
-
-  my_tt = get_normalised_counts_sc(tt)
-
-  expect_equal( ncol(my_tt), 3 )
-  expect_equal( my_tt$cell[1:4], c("D101_43_1", "D101_5_1" , "D101_50_1", "D101_51_1"))
-
-})
-
-test_that("Add normalised counts",{
-
-  my_tt = add_normalised_counts_sc(tt)
-
-  expect_equal( ncol(my_tt), 3 )
-  expect_equal( my_tt$cell[1:4], c("D101_43_1", "D101_5_1" , "D101_50_1", "D101_51_1"))
-
-})
-
-test_that("Add variable genes classification",{
-
-  my_tt =  add_variable_genes_classification(tt)
-
-  expect_equal( ncol(my_tt), 11 )
-  expect_equal( my_tt$`count total`[1:4], c(8839,  3613, 11841, 14665))
-
-})
-
-test_that("Get cell cycle annotation",{
-
-  my_tt =  get_cell_cycle_annotation_sc(tt, cell)
-
-  expect_equal( ncol(my_tt), 4 )
-  expect_equal( my_tt$S.Score[1:4], c(-0.2367882, -0.0902214, -0.2489621, -0.5640438), tolerance=1e-7)
-
-})
-
-test_that("Add cell cycle annotation",{
-
-  my_tt =  add_cell_cycle_annotation_sc(tt, cell)
-
-  expect_equal( ncol(my_tt), 14 )
-  expect_equal( my_tt$S.Score.x[1:4], c(-0.4892333, -0.1579930, -0.3676411, -0.8946705), tolerance=1e-7)
+  expect_equal( ncol(tt_scaled), 14 )
+  expect_equal( as.character(tt_scaled$cell[1:4]), c("D101_43_1", "D101_5_1" , "D101_50_1", "D101_51_1"))
 
 })
 
 test_that("Get reduced dimensions PCA",{
 
-  .dims = 10
+  my_tt =  tt_scaled %>% reduce_dimensions(.dims = 10, method = "PCA")
 
-  my_tt =  get_reduced_dimensions_PCA(tt, .dims = 10)
-
-  expect_equal( ncol(my_tt), .dims + 1 )
-  expect_equal( my_tt$`PC 1`[1:4], c(6.279411 ,  4.115689, -27.747529, -32.714527), tolerance=1e-7)
-
-})
-
-test_that("Add reduced dimensions PCA",{
-
-  .dims = 10
-
-  my_tt =  add_reduced_dimensions_PCA(tt, .dims = 10)
-
-  expect_equal( ncol(my_tt), .dims + 11 )
-  expect_equal( my_tt$`PC 1`[1:4], c(21.75515, 14.47006, 17.83543, 16.21051), tolerance=1e-7)
+  expect_equal( ncol(my_tt), 24 )
+  expect_equal( my_tt$`PC 1`[1:4], c(-6.301245, -4.106271, 27.878208, 32.859274), tolerance=1e-7)
 
 })
 
 test_that("Get reduced dimensions UMAP",{
 
 
-  my_tt =  get_reduced_dimensions_UMAP(tt)
-
-  expect_equal( ncol(my_tt), 3 )
-  expect_equal( my_tt$`UMAP 1`[1:4], c(1.306986, 1.476799, 1.620057, 1.563925), tolerance=1e-7)
-
-})
-
-test_that("Add reduced dimensions UMAP",{
-
-
-  my_tt =  add_reduced_dimensions_UMAP(tt)
-
-  expect_equal( ncol(my_tt), .dims + 3 )
-  expect_equal( my_tt$`UMAP 1`[1:4], c(1.306986, 1.476799, 1.620057, 1.563925), tolerance=1e-7)
+  my_tt =  tt_scaled %>% reduce_dimensions( method = "UMAP")
+  
+  expect_equal( ncol(my_tt), 16 )
+  expect_equal( my_tt$`UMAP 1`[1:4], c( 11.811723, 11.702131, -7.572128, -6.526407), tolerance=1e-7)
 
 })
+
 
 test_that("Get reduced dimensions TSNE",{
 
 
-  my_tt =  get_reduced_dimensions_TSNE(tt)
-
-  expect_equal( ncol(my_tt), 3 )
-  expect_equal( my_tt$`tSNE 1`[1:4], c(7.509182, 8.228692, 7.877330, 7.921603), tolerance=1e-7)
-
-})
-
-test_that("Add reduced dimensions TSNE",{
-
-
-  my_tt =  add_reduced_dimensions_TSNE(tt)
-
-  expect_equal( ncol(my_tt), 13 )
-  expect_equal( my_tt$`tSNE 1`[1:4], c(7.509182, 8.228692, 7.877330, 7.921603), tolerance=1e-7)
+  my_tt =  tt_scaled %>% reduce_dimensions( method = "tSNE")
+  
+  expect_equal( ncol(my_tt), 16 )
+  expect_equal( my_tt$`tSNE 1`[1:4], c( 9.304803 ,  9.459389, -22.754654, -16.733519), tolerance=1e-7)
 
 })
 
 test_that("Get adjusted counts for unwanted variation",{
 
 
-  my_tt =   get_adjusted_counts_for_unwanted_variation_sc(tt, ~ integrate(sample) + S.Score + G2M.Score + mito.fraction)
+  my_tt =   tt %>% adjust_abundance(~ integrate(sample) + S.Score + G2M.Score + mito.fraction)
 
-  expect_equal( ncol(my_tt), 3 )
-  expect_equal( my_tt$nCount_SCT[1:4], c(11936, 11471, 12267, 12848))
-
-})
-
-test_that("Add adjusted counts for unwanted variation",{
-
-
-  my_tt =   add_adjusted_counts_for_unwanted_variation_sc(tt, ~ integrate(sample)  + S.Score + G2M.Score + mito.fraction)
-
-  expect_equal( ncol(my_tt), 13 )
-  expect_equal( my_tt$nCount_SCT[1:4], c(11936, 11471, 12267, 12848))
+  expect_equal( ncol(my_tt), 14 )
+  expect_equal( my_tt$nCount_SCT[1:4], c(11630 ,11112,12046 ,12611))
 
 })
+
 
 test_that("Get cluster annotation SNN",{
 
 
-  my_tt =   get_cluster_annotation_SNN_sc(tt)
+  my_tt =   cluster_elements(tt_scaled)
 
-  expect_equal( ncol(my_tt), 2 )
-  expect_equal( my_tt$cluster[1:4], c(2, 2, 1, 1))
-
-})
-
-test_that("Add cluster annotation SNN",{
-
-
-  my_tt =   add_cluster_annotation_SNN_sc(tt)
-
-  expect_equal( ncol(my_tt), 12 )
-  expect_equal( my_tt$cluster[1:4], c(2, 2, 1, 1))
+  expect_equal( ncol(my_tt), 15 )
+  expect_equal( as.integer(as.character(my_tt$cluster[1:4])), c(2, 2, 1, 1))
 
 })
+
+
 
 test_that("Get cell type annotation",{
 
 
-  my_tt =   get_cell_type_annotation_sc(tt)
+  my_tt =   deconvolve_cellularity(tt_scaled)
 
-  expect_equal( ncol(my_tt), 3 )
-  expect_equal( my_tt$`Cell type Blueprint_Encode`[1:4], c("Neurons", "Neurons", "Epithelial cells", "Epithelial cells"))
-
-})
-
-test_that("Add cell type annotation",{
-
-
-  my_tt =   add_cell_type_annotation_sc(tt)
-
-  expect_equal( ncol(my_tt), 3 )
-  expect_equal( my_tt$`Cell type Blueprint_Encode`[1:4], c("Neurons", "Neurons", "Epithelial cells", "Epithelial cells"))
+  expect_equal( ncol(my_tt), 18 )
+  expect_equal( my_tt$label_blueprint[1:4], c("B-cells"  ,       "Neurons"   ,      "Keratinocytes" ,  "Mesangial cells"))
 
 })
+

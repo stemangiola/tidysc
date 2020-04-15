@@ -2049,7 +2049,6 @@ add_adjusted_counts_for_unwanted_variation_sc = function(.data,
 #' @import Seurat
 #' @importFrom purrr map
 #' @importFrom purrr map_dfr
-#' @import Seurat
 #'
 #' @param .data A tt object
 #'
@@ -2108,7 +2107,6 @@ get_cluster_annotation_SNN_sc = function(.data, ...) {
 #' @import dplyr
 #' @import tidyr
 #' @import tibble
-#' @import Seurat
 #' @import Seurat
 #'
 #' @param .data A tt object
