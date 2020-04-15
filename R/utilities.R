@@ -447,7 +447,7 @@ update_metadata_sc = function(.data, .cell = NULL) {
 			sapply(
 			data_set_to_add %>% select(-!!.cell),
 			class
-			) %in% c("character", "integer", "double", "factor")
+			) %in% c("character", "integer", "double", "factor", "numeric")
 	)
 
 	for(n in columns_to_add){
