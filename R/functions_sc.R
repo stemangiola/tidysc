@@ -2682,8 +2682,8 @@ get_abundance_sc_long = function(.data, transcripts = NULL, all = F){
 				ifelse2_pipe(
 					variable_genes %>% is.null %>% `!`,
 				transcripts %>% is.null %>% `!`,
-				~ .x@data[variable_genes,],
-				~ .x@data[transcripts[transcripts %in% rownames(.x@data)],],
+				~ .x@data[variable_genes,, drop=F],
+				~ .x@data[ toupper(rownames(.x@data)) %in% toupper(transcripts),, drop=F],
 				~ stop("It is not convenient to extract all genes, you should have either variable features or transcript list to extract")
 			) %>%
 				as_tibble(rownames = quo_name(.transcript)) %>%

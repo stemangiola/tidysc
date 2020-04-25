@@ -24,7 +24,7 @@ nest.default <-  function (.data, ...)
 }
 
 #' @export
-nest.tidybulk <- function (.data, ...)
+nest.tidysc <- function (.data, ...)
 {
 	warning("nest is not fully supported yet by tidysc. The nested data frame has been reverted to tbl_df")
 
