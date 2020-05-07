@@ -1,3 +1,5 @@
+setOldClass("tidysc")
+
 #' Creates a `tt` object from a `tbl``
 #'
 #' \lifecycle{experimental}
@@ -264,6 +266,94 @@ tidysc_cell_ranger.default <- function(dir_names,
    genome = genome
   )
 }
+
+#' Creates a `tt` object 
+#'
+#' \lifecycle{maturing}
+#'
+#' @description aggregate_cells() creates a speudo-bulk `tbl` object formatted as | <SAMPLE> | <TRANSCRIPT> | <COUNT> | <...> | 
+#'
+#' @importFrom rlang enquo
+#' @importFrom magrittr "%>%"
+#'
+#' @name aggregate_cells
+#'
+#' @param .data A `tbl` formatted as | <SAMPLE> | <TRANSCRIPT> | <COUNT> | <...> |
+#' @param .sample The name of the sample column
+#'
+#' @details ...
+#'
+#' @return A `tbl_df` object
+#'
+#'
+#' @examples
+#'
+#'
+#'
+#'
+#' my_tt =  aggregate_cells(aggregate_cells::counts_mini, sample, transcript, count)
+#'
+#'
+#' @docType methods
+#' @rdname aggregate_cells-methods
+#' @export
+#'
+setGeneric("aggregate_cells", function(.data,
+                                .sample = NULL
+                             )
+  standardGeneric("aggregate_cells"))
+
+
+
+
+#' aggregate_cells
+#'
+#'
+#' @inheritParams aggregate_cells
+#' @return A `aggregate_cells` object
+#'
+setMethod("aggregate_cells", "tidysc",  function(.data, # .data is incompatible with `map`
+                                          .sample = NULL) {
+	# # Normalise
+	# .data_ = .data_ %>% scale_abundance()
+  
+	.data_ = .data
+	# Make col names
+  .sample = enquo(.sample)
+  
+  # If not specified grub it from attributes
+  if(quo_is_null(.sample)) .sample = .data %>% attr("parameters") %$% .sample
+  
+  
+  .transcript = .data %>% attr("parameters") %$% .transcript
+  .abundance = .data %>% attr("parameters") %$% .abundance
+  
+
+  # Muy assays
+  assay_names_of_choice =	.data %>% 	attr("seurat") %>% 	.[[1]] %>% 	`@` (assays) %>% 	names %>% .[1:2] %>% na.omit() %>% tail(1)
+  
+  # Validate data frame
+  .data_ %>%
+    distinct(!!.sample) %>%
+  	drop_class(c("tidysc", "tt")) %>%
+  	
+  	# Extract cunts
+    mutate(data = map(!!.sample, ~ .data_ %>% 
+                        tidysc::filter(!!.sample == .x) %>%
+    										extract_abundance_bulk
+                        
+                      )
+           ) %>%
+  	left_join(.data_ %>% drop_class(c("tidysc", "ttSc", "tt")) %>% nanny::subset(!!.sample)) %>%
+  	unnest(data) 
+  	
+  	# %>%
+  	# 
+  	# # Convert to tidybulk
+  	# tidybulk::tidybulk(!!.sample, !!.transcript, !!(quo_name(.abundance) %>% paste(assay_names_of_choice, sep="_")))
+  
+
+})
 
 #' Normalise the counts of transcripts/genes
 #'
@@ -1553,4 +1643,3 @@ filter.tidysc <- function (.data, ..., .preserve = FALSE)
     add_class("tt") %>%
     add_class("tidysc")
 
-}

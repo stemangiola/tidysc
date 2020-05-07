@@ -2681,7 +2681,7 @@ get_abundance_sc_long = function(.data, transcripts = NULL, all = F){
 			~ .x %>%
 				ifelse2_pipe(
 					variable_genes %>% is.null %>% `!`,
-				transcripts %>% is.null %>% `!`,
+					transcripts %>% is.null %>% `!`,
 				~ .x@data[variable_genes,, drop=F],
 				~ .x@data[ toupper(rownames(.x@data)) %in% toupper(transcripts),, drop=F],
 				~ stop("It is not convenient to extract all genes, you should have either variable features or transcript list to extract")
@@ -2824,3 +2824,33 @@ add_abundance_sc_wide= function(.data, transcripts = NULL, all = F){
 
 }
 
+#' @importFrom 	Matrix rowSums
+extract_abundance_bulk = function(.data){
+	
+	.transcript = .data %>% attr("parameters") %$% .transcript
+	.abundance = .data %>% attr("parameters") %$% .abundance
+	
+	assay_names =
+		.data %>%
+		attr("seurat") %>%
+		.[[1]] %>%
+		`@` (assays) %>%
+		names
+	
+	
+	.data %>%
+		attr("seurat") %>%
+		.[[1]] %>%
+		`@` (assays) %>%
+		
+		# Take active assay
+		map2(assay_names,
+				 
+				 ~ .x@data %>%
+				 	Matrix::rowSums(na.rm = T) %>%
+				 	as_tibble(rownames = quo_name(.transcript)) %>%
+				 	rename(!!(quo_name(.abundance) %>% paste(.y, sep="_")) := value)
+		) %>%
+		Reduce(function(...) left_join(..., by=c(quo_name(.transcript))), .)
+	
+}
