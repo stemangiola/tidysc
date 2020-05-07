@@ -66,15 +66,21 @@ tidysc_wide() creates a `tt` object from a `tbl` formatted as | <SAMPLE> | <TRAN
 tidysc_cell_ranger() creates a `tt` object from a `tbl` formatted as | <SAMPLE> | <TRANSCRIPT> | <COUNT> | <...> |
 }
 \details{
-This function created a tidysc object and is useful if you want
-to avoid to specify .sample, .transcript and .abundance arguments all the times.
-The tidysc object have an attribute called parameters where these three
-arguments are stored as metadata. They can be extracted as attr(<object>, "parameters").
+\lifecycle{experimental}
 
 This function created a tidysc object and is useful if you want
 to avoid to specify .sample, .transcript and .abundance arguments all the times.
 The tidysc object have an attribute called parameters where these three
 arguments are stored as metadata. They can be extracted as attr(<object>, "parameters").
+
+\lifecycle{experimental}
+
+This function created a tidysc object and is useful if you want
+to avoid to specify .sample, .transcript and .abundance arguments all the times.
+The tidysc object have an attribute called parameters where these three
+arguments are stored as metadata. They can be extracted as attr(<object>, "parameters").
+
+\lifecycle{experimental}
 
 This function created a tidysc object and is useful if you want
 to avoid to specify .sample, .transcript and .abundance arguments all the times.

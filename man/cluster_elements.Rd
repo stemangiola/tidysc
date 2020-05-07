@@ -32,6 +32,8 @@ A tbl object with additional columns with cluster labels
 cluster_elements() takes as imput a `tbl` formatted as | <SAMPLE> | <TRANSCRIPT> | <COUNT> | <...> | and identify clusters in the data. It uses the function Seurat::FindClusters to identify clusters.
 }
 \details{
+\lifecycle{experimental}
+
 identifies clusters in the data, normally of samples.
 This function returns a tibble with additional columns for the cluster annotation.
 At the moment only k-means clustering is supported, the plan is to introduce more clustering methods.

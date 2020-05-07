@@ -26,6 +26,8 @@ A `tbl` object including additional columns for each cell type estimated
 deconvolve_cellularity() takes as imput a `tbl` formatted as | <SAMPLE> | <TRANSCRIPT> | <COUNT> | <...> | and returns a `tbl` with the estimated cell type abundance for each sample
 }
 \details{
+\lifecycle{experimental}
+
 This function infers the cell type composition of our samples (with the algorithm Cibersort; Newman et al., 10.1038/nmeth.3337).
 }
 \examples{
