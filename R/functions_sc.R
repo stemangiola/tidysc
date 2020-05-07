@@ -2679,11 +2679,13 @@ get_abundance_sc_long = function(.data, transcripts = NULL, all = F){
 		map2(assay_names,
 
 			~ .x %>%
-				ifelse2_pipe(
+				ifelse3_pipe(
 					variable_genes %>% is.null %>% `!`,
 					transcripts %>% is.null %>% `!`,
+					all,
 				~ .x@data[variable_genes,, drop=F],
 				~ .x@data[ toupper(rownames(.x@data)) %in% toupper(transcripts),, drop=F],
+				~ .x@data,
 				~ stop("It is not convenient to extract all genes, you should have either variable features or transcript list to extract")
 			) %>%
 				as_tibble(rownames = quo_name(.transcript)) %>%

@@ -49,6 +49,51 @@ ifelse2_pipe = function(.x, .p1, .p2, .f1, .f2, .f3 = NULL) {
     ))
 }
 
+#' This is a generalisation of ifelse that acceots an object and return an objects
+#'
+#' @import dplyr
+#' @import tidyr
+#'
+#' @param .x A tibble
+#' @param .p1 A boolean
+#' @param .p2 ELSE IF condition
+#' @param .f1 A function
+#' @param .f2 A function
+#' @param .f3 A function
+#'
+#' @return A tibble
+ifelse3_pipe = function(.x, .p1, .p2, .p3, .f1, .f2, .f3, .f4 = NULL) {
+	# Nested switch
+	switch(# First condition
+		.p1 %>% `!` %>% sum(1),
+		
+		# First outcome
+		as_mapper(.f1)(.x),
+		switch(
+			# Second condition
+			.p2 %>% `!` %>% sum(1),
+			
+			# Second outcome
+			as_mapper(.f2)(.x),
+			
+			# Third outcome - if there is not .f3 just return the original data frame
+			switch(
+				# Second condition
+				.p3 %>% `!` %>% sum(1),
+				
+				# Second outcome
+				as_mapper(.f3)(.x),
+				
+				# Third outcome - if there is not .f3 just return the original data frame
+				if (.f4 %>% is.null %>% `!`)
+					as_mapper(.f4)(.x)
+				else
+					.x
+			)
+		))
+}
+
+
 #' Get matrix from tibble
 #'
 #' @import dplyr
