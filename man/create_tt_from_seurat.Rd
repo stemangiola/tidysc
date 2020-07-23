@@ -14,7 +14,8 @@ create_tt_from_seurat(
   .sample = sample,
   .cell = cell,
   species,
-  genome = ifelse(species == "Human", "hg38", "mm10")
+  genome = switch(tolower(species), human = "hg38", mouse = "mm10",
+    stop("tidysc says: species not present"))
 )
 }
 \arguments{

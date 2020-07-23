@@ -11,7 +11,8 @@ create_tt_from_cellRanger_sc(
   high.mito.thresh = 0.08,
   high.umi.thresh = 10000,
   species,
-  genome = ifelse(species == "Human", "hg38", "mm10")
+  genome = switch(tolower(species), human = "hg38", mouse = "mm10",
+    stop("tidysc says: species not present"))
 )
 }
 \arguments{

@@ -8,6 +8,7 @@ extract_abundance(
   .data,
   transcripts = NULL,
   all = F,
+  exclude_zeros = F,
   shape = "long",
   action = "add"
 )

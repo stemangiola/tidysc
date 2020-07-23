@@ -14,7 +14,8 @@ create_tt_from_tibble_wide_sc(
   min.cells = 5,
   high.mito.thresh = 0.08,
   high.umi.thresh = 10000,
-  genome = ifelse(species == "Human", "hg38", "mm10"),
+  genome = switch(tolower(species), human = "hg38", mouse = "mm10",
+    stop("tidysc says: species not present")),
   ...
 )
 }

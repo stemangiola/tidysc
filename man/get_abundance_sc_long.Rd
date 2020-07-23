@@ -4,7 +4,7 @@
 \alias{get_abundance_sc_long}
 \title{get abundance long}
 \usage{
-get_abundance_sc_long(.data, transcripts = NULL, all = F)
+get_abundance_sc_long(.data, transcripts = NULL, all = F, exclude_zeros = F)
 }
 \description{
 get abundance long

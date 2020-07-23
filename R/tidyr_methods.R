@@ -42,3 +42,42 @@ nest.tidysc <- function (.data, ...)
 	# 	add_class("tidybulk")
 
 }
+
+#' @export
+extract <- function  (data, col, into, regex = "([[:alnum:]]+)", remove = TRUE, 
+										 convert = FALSE, ...)   {
+	UseMethod("extract")
+}
+
+#' @export
+extract.default <-  function  (data, col, into, regex = "([[:alnum:]]+)", remove = TRUE, 
+															convert = FALSE, ...) 
+{
+	col = enquo(col)
+	tidyr::extract(col = !!col, into = into, regex = regex, remove = remove, 
+								 convert = convert, ...) 
+}
+
+#' @export
+extract.tidysc <- function  (data, col, into, regex = "([[:alnum:]]+)", remove = TRUE, 
+														convert = FALSE, ...) 
+{
+	
+	col = enquo(col)
+	
+	data %>%
+		drop_class(c("tidysc", "tt")) %>%
+		tidyr::extract(col = !!col, into = into, regex = regex, remove = remove, 
+									 convert = convert, ...)  %>%
+		
+		# Update seurat
+		add_attr(data %>% attr("seurat"), "seurat") %>%
+		add_attr(data %>% attr("parameters"), "parameters") %>%
+		update_metadata_sc() %>%
+		
+		# Add tt class
+		add_class("tt") %>%
+		add_class("tidysc")
+		
+	
+}

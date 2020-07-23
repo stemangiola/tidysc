@@ -264,8 +264,8 @@ create_tt_from_seurat = function(seurat_object,
 																 .sample = `sample`,
 																 .cell = `cell`,
 																 species,
-																 genome = ifelse(species == "Human", "hg38", "mm10")) {
-	writeLines("Converting Seurat object back to tibble")
+																 genome = switch(tolower(species),  "human" = "hg38", "mouse" = "mm10", stop("tidysc says: species not present"))) {
+	message("Converting Seurat object back to tibble")
 
 	# Parse column names
 	.sample = enquo(.sample)
@@ -474,7 +474,7 @@ create_seurat_from_tibble_wide = function(.data,
 	sample_names =
 		.data %>%
 		pull(!!.sample)
-
+ 
 	# Create Seurat object
 	seurat_object =
 		CreateSeuratObject(
@@ -542,7 +542,7 @@ create_tt_from_tibble_sc = function(.data,
 																		min.cells = 5,
 																		high.mito.thresh = 0.08,
 																		high.umi.thresh = 10000,
-																		genome = ifelse(species == "Human", "hg38", "mm10"),
+																		genome = switch(tolower(species),  "human" = "hg38", "mouse" = "mm10", stop("tidysc says: species not present")),
 																		...) {
 	writeLines("Start parsing the data frame")
 
@@ -727,7 +727,7 @@ create_tt_from_tibble_wide_sc = function(.data,
 																				 min.cells = 5,
 																				 high.mito.thresh = 0.08,
 																				 high.umi.thresh = 10000,
-																				 genome = ifelse(species == "Human", "hg38", "mm10"),
+																				 genome = switch(tolower(species),  "human" = "hg38", "mouse" = "mm10", stop("tidysc says: species not present")) ,
 																				 ...) {
 	writeLines("Start parsing the data frame")
 
@@ -839,8 +839,8 @@ create_tt_from_tibble_wide_sc = function(.data,
 		ifelse_pipe(
 			(.) %>% pull(!!.sample) %>% levels %>% length %>% `>` (1),
 			~ .x %>%
-				mutate(sample_idx = !!.sample %>% as.integer) %>%
-				unite(!!.cell, c(!!.cell, sample_idx), sep = "_")
+				mutate(sample_idx = !!.sample %>% factor %>% as.integer) %>%
+				tidyr::unite(!!.cell, c(!!.cell, sample_idx), sep = "_", )
 		) %>%
 
 		# Anonymous function - create Seurat object
@@ -917,7 +917,7 @@ create_tt_from_cellRanger_sc <- function(dir_names,
 																				 high.mito.thresh = 0.08,
 																				 high.umi.thresh = 10000,
 																				 species,
-																				 genome = ifelse(species == "Human", "hg38", "mm10")) {
+																				 genome = switch(tolower(species),  "human" = "hg38", "mouse" = "mm10", stop("tidysc says: species not present")) ) {
 	# n_cores <- system("nproc", intern = TRUE) %>%
 	# 	as.integer() %>%
 	# 	`-`(2)
@@ -1932,7 +1932,7 @@ get_adjusted_counts_for_unwanted_variation_sc = function(.data,
 
 		# If Integration split the object before batch correct
 		ifelse_pipe(
-			.integrate_column %in% variables_to_regress,
+			length(.integrate_column) > 0 && .integrate_column %in% variables_to_regress,
 			~ .x %>%
 				map(~ .x %>% SplitObject(split.by = "orig.ident")) %>%
 				unlist
@@ -1972,7 +1972,7 @@ get_adjusted_counts_for_unwanted_variation_sc = function(.data,
 
 		# INTEGRATION - If sample within covariates Eliminate sample variation with integration
 		ifelse_pipe(
-			.integrate_column %in% variables_to_regress ,
+			length(.integrate_column) > 0 && .integrate_column %in% variables_to_regress ,
 			~ .x %>%	do_integration_seurat %>%	list
 		)
 
@@ -2627,7 +2627,7 @@ filter_update_and_add_attr = function(.data, ...){
 #' @importFrom magrittr "%$%"
 #'
 #' @export
-get_abundance_sc_long = function(.data, transcripts = NULL, all = F){
+get_abundance_sc_long = function(.data, transcripts = NULL, all = F, exclude_zeros = F){
 
 	# Cell column name
 	.cell = .data %>% attr("parameters")  %$% .cell
@@ -2688,8 +2688,17 @@ get_abundance_sc_long = function(.data, transcripts = NULL, all = F){
 				~ .x@data,
 				~ stop("It is not convenient to extract all genes, you should have either variable features or transcript list to extract")
 			) %>%
+				
+				# Replace 0 with NA
+				when(exclude_zeros ~ (.) %>% { x = (.); x[x == 0] <- NA; x }, ~ (.)) %>%
+			
 				as_tibble(rownames = quo_name(.transcript)) %>%
-				gather(!!.cell, !!(quo_name(.abundance) %>% paste(.y, sep="_")), -!!.transcript) %>%
+				pivot_longer(
+					cols = -!!.transcript,
+					names_to =quo_name(.cell), 
+					values_to = quo_name(.abundance) %>% paste(.y, sep="_"),
+					values_drop_na  = TRUE
+				) %>%
 				mutate_if(is.character, as.factor) %>%
 
 				# Add back class
@@ -2706,7 +2715,7 @@ get_abundance_sc_long = function(.data, transcripts = NULL, all = F){
 }
 
 #' @export
-add_abundance_sc_long = function(.data, transcripts = NULL, all = F){
+add_abundance_sc_long = function(.data, transcripts = NULL, all = F, exclude_zeros = F){
 
 	# Update on tibble
 	.data = .data %>% update_object_sc()
@@ -2717,7 +2726,7 @@ add_abundance_sc_long = function(.data, transcripts = NULL, all = F){
 	# Get now object
 	.data.annotated =
 		.data %>%
-		get_abundance_sc_long(transcripts = transcripts, all = all)
+		get_abundance_sc_long(transcripts = transcripts, all = all, exclude_zeros = exclude_zeros)
 
 	# Merge
 	.data %>%

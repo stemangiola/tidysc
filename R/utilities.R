@@ -475,7 +475,7 @@ update_metadata_sc = function(.data, .cell = NULL) {
 	.cell = enquo(.cell)
 	col_names = get_cell(.data, .cell)
 	.cell = col_names$.cell
-
+ 
 	seurat_obj = .data %>% attr("seurat")
 
 	data_set_to_add =
@@ -492,7 +492,7 @@ update_metadata_sc = function(.data, .cell = NULL) {
 			sapply(
 			data_set_to_add %>% select(-!!.cell),
 			class
-			) %in% c("character", "integer", "double", "factor", "numeric")
+			) %in% c("character", "integer", "double", "factor", "numeric", "logical")
 	)
 
 	for(n in columns_to_add){

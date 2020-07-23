@@ -344,7 +344,7 @@ setMethod("aggregate_cells", "tidysc",  function(.data, # .data is incompatible 
                         
                       )
            ) %>%
-  	left_join(.data_ %>% drop_class(c("tidysc", "ttSc", "tt")) %>% nanny::subset(!!.sample)) %>%
+  	left_join(.data_ %>% drop_class(c("tidysc", "tt")) %>% nanny::subset(!!.sample)) %>%
   	unnest(data) 
   	
   	# %>%
@@ -1368,6 +1368,7 @@ test_differential_abundance.tbl_df = test_differential_abundance.tidysc <-
 extract_abundance <- function(.data,
                               transcripts = NULL,
                               all = F,
+															exclude_zeros = F,
 															shape = "long",
                               action = "add") {
   UseMethod("extract_abundance", .data)
@@ -1377,6 +1378,7 @@ extract_abundance.default <-
   function(.data,
            transcripts = NULL,
            all = F,
+  				 exclude_zeros = F,
   				 shape = "long",
            action = "add")
   {
@@ -1387,6 +1389,7 @@ extract_abundance.tidysc <-
   function(.data,
            transcripts = NULL,
            all = F,
+  				 exclude_zeros = F,
   				 shape = "long",
   				 action = "add")
   {
@@ -1396,13 +1399,15 @@ extract_abundance.tidysc <-
 	      add_abundance_sc_long(
 	        .data = .data,
 	        transcripts = transcripts,
-	        all = all
+	        all = all,
+	        exclude_zeros = exclude_zeros
 	      )
 	    else if (action == "get")
 	    	get_abundance_sc_long(
 	        .data = .data,
 	        transcripts = transcripts,
-	        all = all
+	        all = all,
+	        exclude_zeros = exclude_zeros
 	      )
 	    else
 	      stop(
@@ -1411,13 +1416,13 @@ extract_abundance.tidysc <-
   	}
   	else if(shape == "wide"){
   		if (action == "add")
-  			add_abundance_sc_long(
+  			add_abundance_sc_wide(
   				.data = .data,
   				transcripts = transcripts,
   				all = all
   			)
   		else if (action == "get")
-  			get_abundance_sc_long(
+  			get_abundance_sc_wide(
   				.data = .data,
   				transcripts = transcripts,
   				all = all
