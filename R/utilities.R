@@ -471,13 +471,14 @@ update_object_sc = function(.data, .cell = NULL) {
 
 #' @export
 update_metadata_sc = function(.data, .cell = NULL) {
-	# Get column names
+	# Get column names 
 	.cell = enquo(.cell)
 	col_names = get_cell(.data, .cell)
 	.cell = col_names$.cell
  
 	seurat_obj = .data %>% attr("seurat")
-
+	column_seurat = seurat_obj[[1]]@meta.data %>% colnames
+	
 	data_set_to_add =
 		.data %>%
 		#select(-one_of(seurat_obj[[1]]@meta.data %>% colnames)) %>%
@@ -485,16 +486,29 @@ update_metadata_sc = function(.data, .cell = NULL) {
 
 	columns_to_add =
 		data_set_to_add %>% select(-!!.cell) %>%
-		colnames %>%
-
+		
 		# Do not consider in meta.data if nested
-		`[` (
-			sapply(
-			data_set_to_add %>% select(-!!.cell),
-			class
-			) %in% c("character", "integer", "double", "factor", "numeric", "logical")
-	)
+		select_if(function(x) is.character(x) | is.integer(x) | is.double(x) | is.factor(x) | is.numeric(x) | is.logical(x)) %>%
+		colnames 
+	# %>%
+	# 	
+	# 	# Exclude the ones already present in meta.data
+	# 	{ (.)[(.) %in% (column_seurat %>% gsub(" ", ".", .)) %>% `!`] } 
+	
+	columns_to_remove =
+		data_set_to_add %>%
+		
+		# Do not consider in meta.data if nested
+		select_if(function(x) is.character(x) | is.integer(x) | is.double(x) | is.factor(x) | is.numeric(x) | is.logical(x)) %>%
+		colnames %>%
+		
+		# Exclude the ones already present in meta.data
+		gsub(" ", ".", .) %>%
+		{ column_seurat[column_seurat %in% (.) %>% `!`  ] } %>%
+		
+		grep("ident|nCount_RNA|nFeature_RNA", ., invert = T, value = T) 
 
+	# Adding columns
 	for(n in columns_to_add){
 
 		seurat_obj[[1]] <- AddMetaData(
@@ -503,11 +517,14 @@ update_metadata_sc = function(.data, .cell = NULL) {
 				data_set_to_add %>%
 				pull(n) %>%
 				setNames(data_set_to_add %>% pull(!!.cell)),
-			col.name = n
+			col.name = n %>% gsub(" ", ".", .)
 		)
 
 	}
 
+	# Remove columns
+	seurat_obj[[1]]@meta.data = seurat_obj[[1]]@meta.data %>% dplyr::select(-columns_to_remove)
+	
 	.data %>% add_attr(seurat_obj, "seurat")
 }
 
@@ -548,4 +565,66 @@ error_if_parameters_not_match = function(par1, par2){
 		print(cbind(par1, par2))
 		stop("the parameters of the two objects must match")
 	}
+}
+
+run_singleR = function(seurat,
+											 clusters,
+											 name = NULL,
+											 species,
+											 min.transcripts = 200) {
+	f = !is.na(clusters)
+	
+	# Get references
+	hpca.se <- SingleR::HumanPrimaryCellAtlasData()
+	blueprint <- SingleR::BlueprintEncodeData()
+	MouseRNAseq = MouseRNAseqData()
+	
+	# Create ref list
+	ref =
+		species %>%
+		ifelse2_pipe(
+			.p1 = (.) %>% tolower() %>% equals("human"),
+			.p2 = (.) %>% tolower() %>% equals("mouse"),
+			~ list(hpca = hpca.se, blueprint = blueprint),
+			~ list(MouseRNAseq = MouseRNAseq),
+			stop("Species should be either human or mouse, case insensitive")
+		)
+	
+	# my assay
+	my_assay =
+		seurat@assays %>%
+		names %>%
+		base::grep("integrated", ., invert = TRUE, value=TRUE) %>%
+		`[` (length(.))
+	
+	
+	# Test data frame
+	test = seurat@assays[[my_assay]]@counts %>% `+` (1) %>% log %>% Matrix::Matrix(sparse = TRUE)
+	
+	# Calculate and return
+	ref %>%
+		map2_dfr(
+			names(ref),
+			~ 	{
+				singler = SingleR::SingleR(
+					test =  test,
+					ref = .x,
+					labels = .x$label.main,
+					clusters = clusters,
+					method = ifelse(clusters %>% is.null, "single", "cluster")
+				)
+				
+				singler$scores %>% as_tibble %>%
+					dplyr::mutate(ID = singler %>% rownames) %>%
+					mutate(label = singler$first.labels) %>%
+					#gather(ct, score, -ID, -label) %>%
+					nest(`Cell type scores` =  -c(ID, label)) %>%
+					mutate(SingleR_DB = .y)
+				
+			}
+		) %>%
+		
+		# Integrate inference
+		pivot_wider(values_from = c(label, `Cell type scores`), names_from = SingleR_DB)
+	
 }

@@ -355,6 +355,38 @@ setMethod("aggregate_cells", "tidysc",  function(.data, # .data is incompatible 
 
 })
 
+#' aggregate_cells
+#'
+#'
+#' @inheritParams aggregate_cells
+#' @return A `aggregate_cells` object
+#'
+setMethod("aggregate_cells", "tidyseurat",  function(.data) {
+
+	.data %>%
+		
+		tidyseurat::nest(data = -sample) %>%
+		mutate(data = map(data, ~ 
+				
+			# loop over assays
+			map2(.x@assays, names(.x@assays),
+					 
+					 # Get counts
+					 ~ .x@data %>%
+					 	Matrix::rowSums(na.rm = T) %>%
+					 	tibble::enframe(
+					 		name  = "transcript",
+					 		value = sprintf("abundance_%s", .y)
+					 	)
+			) %>%
+			Reduce(function(...) left_join(..., by=c("transcript")), .)
+			
+		)) %>%
+		left_join(.data %>% tidyseurat::as_tibble() %>% nanny::subset(sample)) %>%
+		unnest(data) 
+	
+})
+
 #' Normalise the counts of transcripts/genes
 #'
 #' \lifecycle{experimental}
@@ -428,6 +460,16 @@ scale_abundance.tbl_df = scale_abundance.tidysc <-
 
   }
 
+#' @export
+scale_abundance.tidyseurat <-
+	function(.data,
+					 verbose = TRUE,
+					 action = "add")
+	{
+
+		.data %>%	SCTransform(verbose = verbose,	new.assay.name = "normalised"	)
+		
+	}
 #' Get clusters of elements (e.g., samples or transcripts)
 #'
 #' \lifecycle{experimental}
@@ -484,16 +526,60 @@ cluster_elements.default <-  function(.data,
 
 #' @export
 cluster_elements.tidysc <-  function(.data,
+																		 resolution = 0.8,
+																		 automatic_resolution = FALSE,
                                     action = "add", ...)
 {
-  if (action == "add")
-    add_cluster_annotation_SNN_sc(.data, ...)
-  else if (action == "get")
-    get_cluster_annotation_SNN_sc(.data, ...)
+	
+	# Cell column name
+	.cell = .data %>% attr("parameters")  %$% .cell
+	
+	.data_processed = 
+		.data %>%
+		update_object_sc %>%
+		when(
+			automatic_resolution ~ get_cluster_annotation_SNN_automatic(.data, ...),
+			~	 get_cluster_annotation_SNN_sc(.data, resolution = resolution, ...)
+		) 
+	
+	if(action=="get"){
+		.data_processed
+	}
+	else if(action=="add"){
+	
+	# Merge
+	.data %>%
+		left_join(.data_processed ,	by = quo_name(.cell)) %>%
+		
+		# Add back the attributes objects
+		add_attr(.data_processed %>% attr("seurat"), "seurat") %>%
+		add_attr(.data %>% attr("parameters"), "parameters")
+	}
   else
     stop(
       "action must be either \"add\" for adding this information to your data frame or \"get\" to just get the information"
     )
+}
+
+#' @export
+cluster_elements.tidyseurat <-  function(.data,
+																		 resolution = 0.8,
+																		 automatic_resolution = FALSE,
+																		 action = "add", ...)
+{
+	
+	arguments <- list(...)
+	
+	.data %>%
+		when(
+			automatic_resolution ~ IKAP(
+						.,
+						out.dir = tempfile(pattern = "IKAP_", tmpdir = ".", fileext = ""),
+						k.max = 15
+					),
+			~	RunPCA(., npcs = 15) %>% FindNeighbors() %>% FindClusters(method = "igraph", resolution = resolution )
+		) 
+	
 }
 
 
@@ -625,7 +711,27 @@ reduce_dimensions.tidysc <-
       stop("method must be either \"PCA\", \"tSNE\" or \"UMAP\"")
 
   }
+#' @importFrom purrr when
+#' @export
+reduce_dimensions.tidyseurat <-
+	function(.data,
+					 method,
+					 .dims = 10,
+					 action = "add")
+	{
 
+		.data  %>%
+			FindVariableFeatures(selection.method = "vst") %>%
+			RunPCA(npcs = .dims %>% max) %>%
+			
+			when(
+				method == "PCA" ~ (.),
+				method == "tSNE" ~ RunTSNE(., reduction = "pca", dims = 1:.dims),
+				method == "UMAP" ~ RunUMAP(., reduction = "pca", dims = 1:.dims, n.components = 3L),
+				~ stop("method must be either \"PCA\", \"tSNE\" or \"UMAP\"")
+			)
+		
+	}
 
 
 #' Rotate two dimensions (e.g., principal .dims) of an arbitrary angle
@@ -980,7 +1086,63 @@ adjust_abundance.tbl_df = adjust_abundance.tidysc <-
         "action must be either \"add\" for adding this information to your data frame or \"get\" to just get the information"
       )
   }
-
+#' @export
+adjust_abundance.tidyseurat <-
+	function(.data,
+					 .formula,
+					 do.scale = F,
+					 do.center = F,
+					 verbose = T,
+					 action = "add",
+					 ...)
+	{
+		
+		
+		
+		# Get integrate column
+		.integrate_column = parse_formula(.formula) %>% grep("integrate(", ., fixed = T, value = T) %>% gsub("integrate\\(|\\)", "", .)
+		
+		# Get character array of variable to regress
+		variables_to_regress = parse_formula(.formula) %>% gsub("integrate\\(|\\)", "", .)
+		
+		variables_to_regress_no_sample =
+			variables_to_regress %>%
+			ifelse_pipe(
+				length(.integrate_column) > 0,
+				~ .x %>% grep(.integrate_column, ., value = T, invert = T)
+			) %>%
+			ifelse_pipe( (.) %>% length %>% equals(0), ~ NULL)
+		
+		
+		# # Evaluate ...
+		# arguments <- list(...)
+		
+		.data %>%
+		
+			# If Integration split the object before batch correct
+			when(
+				length(.integrate_column) > 0 && .integrate_column %in% variables_to_regress ~ 
+					SplitObject(., split.by = .integrate_column),
+				~ (.) %>% list
+			) %>%
+			
+			# Scale data for covariates other than sample
+			map(~ SCTransform(
+				.x,
+				verbose = verbose,
+				assay = "RNA",
+				vars.to.regress = variables_to_regress_no_sample
+			)) %>%
+			
+			# INTEGRATION - If sample within covariates Eliminate sample variation with integration
+			when(
+				length(.integrate_column) > 0 && .integrate_column %in% variables_to_regress  ~ 
+					do_integration_seurat(.),
+				~ (.)[[1]]
+			) %>%
+			
+			tidyseurat::tidy()
+}
 
 #' Aggregates multiple counts from the same samples (e.g., from isoforms), concatenates other character columns, and averages other numeric columns
 #'
@@ -1143,12 +1305,15 @@ aggregate_duplicates.tbl_df = aggregate_duplicates.tidysc <-
 #' @export
 #'
 deconvolve_cellularity <- function(.data,
+																	 species,
+																	 
                                action = "add") {
   UseMethod("deconvolve_cellularity", .data)
 }
 #' @export
 deconvolve_cellularity.default <-  function(.data,
-
+																						species,
+																						
                                         action = "add")
 {
   print("This function cannot be applied to this object")
@@ -1156,6 +1321,8 @@ deconvolve_cellularity.default <-  function(.data,
 #' @export
 deconvolve_cellularity.tbl_df = deconvolve_cellularity.tidysc <-
   function(.data,
+  				 species,
+  				 
            action = "add")  {
 
     if (action == "add")
@@ -1168,7 +1335,76 @@ deconvolve_cellularity.tbl_df = deconvolve_cellularity.tidysc <-
       )
   }
 
+#' @export
+deconvolve_cellularity.tidyseurat <-
+	function(.data,
+					 species,
+					 action = "add")  {
+		
+		
+		# Check if package is installed, otherwise install
+		if ("SingleR" %in% rownames(installed.packages()) == FALSE) {
+			writeLines("Installing SingleR")
+			devtools::install_github('dviraran/SingleR')
+		}
+		
+		library(SingleR)
+		
+		my_clusters = switch(
+			"cluster" %in% (.data@meta.data %>% colnames) %>% `!` %>% sum(1),
+			.data@meta.data$cluster %>% as.character,
+			NULL
+		)
+		
+		# Save cell type annotation
+		ct_class =
+			.data %>%
+			run_singleR(my_clusters, species =  species) %>%
+			
+			# Change ID name if I have clusters of not
+			when(
+				my_clusters %>% is.null	~ rename(., cell = ID),
+				~ rename(., cluster = ID)
+			)
+		
+		# make dataframe with no nest
+		ct_class_simple = ct_class %>% select(-contains("Cell type scores"))
+		
+		# Add renamed annotation
+		.data@meta.data =
+			.data@meta.data %>%
+			ifelse_pipe(
+				my_clusters %>% is.null,
+				
+				# Bind based on cell name
+				~ .x %>%
+					cbind(
+						ct_class_simple[
+							match(
+								.x %>% rownames ,
+								ct_class_simple %>% pull(!!.cell)),
+						] %>%
+							mutate_if(is.character, as.factor) %>%
+							select(-!!.cell)
+					),
+				
+				# Else, bind based on cluster
+				~ .x %>%
+					cbind(
+						ct_class_simple[
+							match(
+								.x %>% pull(cluster) ,
+								ct_class_simple %>% pull(cluster)),
+						] %>%
+							mutate_if(is.character, as.factor) %>%
+							select(-cluster)
+					)
+			)
+		
+		.data
+		
 
+	}
 
 #' Add transcript symbol column from ensembl id
 #'

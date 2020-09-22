@@ -1,4 +1,9 @@
 #' Join datasets
+#' 
+#' @importFrom rlang dots_values
+#' @importFrom rlang flatten_if
+#' @importFrom rlang is_spliced
+#' 
 #' @export
 bind_rows <- function(...) {
 	UseMethod("bind_rows")
@@ -13,7 +18,7 @@ bind_rows.default <-  function(...)
 #' @export
 bind_rows.tidysc <- function(...)
 {
-	tts = dplyr:::flatten_bindable(rlang::dots_values(...))
+  tts = flatten_if(dots_values(...), is_spliced)
 	
 	par1 = tts[[1]] %>% attr("parameters") %>% unlist
 	par2 = tts[[2]] %>% attr("parameters") %>% unlist
@@ -202,6 +207,151 @@ filter.tidysc <- function (.data, ..., .preserve = FALSE)
 		
 		# Update seurat
 		update_object_sc() %>%
+		
+		# Add class
+		add_class("tt") %>%
+		add_class("tidysc")
+	
+}
+
+
+
+#' Subset columns using their names and types
+#'
+#' @description
+#'
+#' Select (and optionally rename) variables in a data frame, using a concise
+#' mini-language that makes it easy to refer to variables based on their name
+#' (e.g. `a:f` selects all columns from `a` on the left to `f` on the
+#' right). You can also use predicate functions like [is.numeric] to select
+#' variables based on their properties.
+#'
+#'
+#' ## Overview of selection features
+#'
+#' ```{r, child = "man/rmd/overview.Rmd"}
+#' ```
+#'
+#' @inheritParams arrange
+#' @param ... <[`tidy-select`][dplyr_tidy_select]> One or more unquoted
+#'   expressions separated by commas. Variable names can be used as if they
+#'   were positions in the data frame, so expressions like `x:y` can
+#'   be used to select a range of variables.
+#' @return
+#' An object of the same type as `.data`. The output has the following
+#' properties:
+#'
+#' * Rows are not affected.
+#' * Output columns are a subset of input columns, potentially with a different
+#'   order. Columns will be renamed if `new_name = old_name` form is used.
+#' * Data frame attributes are preserved.
+#' * Groups are maintained; you can't select off grouping variables.
+#'
+#' @section Methods:
+#' This function is a **generic**, which means that packages can provide
+#' implementations (methods) for other classes. See the documentation of
+#' individual methods for extra arguments and differences in behaviour.
+#'
+#' The following methods are currently available in loaded packages:
+#' \Sexpr[stage=render,results=rd]{dplyr:::methods_rd("select")}.
+#'
+#' @section Examples:
+#' ```{r, child = "man/rmd/setup.Rmd"}
+#' ```
+#'
+#' Here we show the usage for the basic selection operators. See the
+#' specific help pages to learn about helpers like [starts_with()].
+#'
+#' The selection language can be used in functions like
+#' `dplyr::select()` or `tidyr::pivot_longer()`. Let's first attach
+#' the tidyverse:
+#'
+#' ```{r, comment = "#>", collapse = TRUE}
+#' library(tidyverse)
+#'
+#' # For better printing
+#' iris <- as_tibble(iris)
+#' ```
+#'
+#' Select variables by name:
+#'
+#' ```{r, comment = "#>", collapse = TRUE}
+#' starwars %>% select(height)
+#'
+#' iris %>% pivot_longer(Sepal.Length)
+#' ```
+#'
+#' Select multiple variables by separating them with commas. Note how
+#' the order of columns is determined by the order of inputs:
+#'
+#' ```{r, comment = "#>", collapse = TRUE}
+#' starwars %>% select(homeworld, height, mass)
+#' ```
+#'
+#' Functions like `tidyr::pivot_longer()` don't take variables with
+#' dots. In this case use `c()` to select multiple variables:
+#'
+#' ```{r, comment = "#>", collapse = TRUE}
+#' iris %>% pivot_longer(c(Sepal.Length, Petal.Length))
+#' ```
+#'
+#' ## Operators:
+#'
+#' The `:` operator selects a range of consecutive variables:
+#'
+#' ```{r, comment = "#>", collapse = TRUE}
+#' starwars %>% select(name:mass)
+#' ```
+#'
+#' The `!` operator negates a selection:
+#'
+#' ```{r, comment = "#>", collapse = TRUE}
+#' starwars %>% select(!(name:mass))
+#'
+#' iris %>% select(!c(Sepal.Length, Petal.Length))
+#'
+#' iris %>% select(!ends_with("Width"))
+#' ```
+#'
+#' `&` and `|` take the intersection or the union of two selections:
+#'
+#' ```{r, comment = "#>", collapse = TRUE}
+#' iris %>% select(starts_with("Petal") & ends_with("Width"))
+#'
+#' iris %>% select(starts_with("Petal") | ends_with("Width"))
+#' ```
+#'
+#' To take the difference between two selections, combine the `&` and
+#' `!` operators:
+#'
+#' ```{r, comment = "#>", collapse = TRUE}
+#' iris %>% select(starts_with("Petal") & !ends_with("Width"))
+#' ```
+#'
+#' @family single table verbs
+#' @export
+select <- function(.data, ...) {
+	UseMethod("select")
+}
+
+#' @export
+select.default <-  function (.data, ...)
+{
+	dplyr::select(.data, ...)
+}
+
+#' @export
+select.tidysc <- function (.data, ...)
+{
+	
+	.data %>%
+		drop_class(c("tidysc", "tt")) %>%
+		dplyr::select( ...) %>%
+		
+		# Update seurat
+		add_attr(.data %>% attr("seurat"), "seurat") %>%
+		add_attr(.data %>% attr("parameters"), "parameters") %>%
+		update_metadata_sc() %>%
 		
 		# Add class
 		add_class("tt") %>%

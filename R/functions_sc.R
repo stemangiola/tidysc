@@ -1659,7 +1659,7 @@ get_reduced_dimensions_UMAP = function(.data, .dims = 10) {
 		map(~
 					.x %>%
 					#ScaleData(display.progress = T, num.cores=4, do.par = TRUE) %>%
-					RunUMAP(reduction = "pca", dims = 1:.dims))
+					RunUMAP(reduction = "pca", dims = 1:.dims, n.components = 3L))
 
 	seurat_object %>%
 		map_dfr(
@@ -1821,7 +1821,8 @@ add_reduced_dimensions_TSNE = function(.data, .dims = 10) {
 #'
 #' @return A tt seurat object
 do_integration_seurat = function(seurat_list) {
-	my_features = seurat_list %>% SelectIntegrationFeatures(nfeatures = 3000)
+	verbose = FALSE
+	my_features = seurat_list %>% SelectIntegrationFeatures(nfeatures = 3000, verbose = verbose)
 
 	#plan(strategy = "multicore", workers = 30)
 
@@ -1829,12 +1830,12 @@ do_integration_seurat = function(seurat_list) {
 	prep_integration =
 		seurat_list %>%
 		PrepSCTIntegration(anchor.features = my_features,
-											 verbose = FALSE)
+											 verbose = verbose)
 
 	# Max common cells, in case the common cells are < 30
 	dims = map_int(prep_integration, ~ .x %>% ncol) %>% min %>% min(30) %>% sum(-1)
 
-	# Another parameter that is impotant if I have small number of cells
+	# Another parameter that is important if I have small number of cells
 	k.filter <- min(200, min(sapply(prep_integration, ncol)))
 
 	# Integrate
@@ -1842,11 +1843,11 @@ do_integration_seurat = function(seurat_list) {
 		FindIntegrationAnchors(
 			normalization.method = "SCT",
 			anchor.features = my_features,
-			verbose = TRUE,
+			verbose = verbose,
 			dims = 1:dims,
 			k.filter = k.filter
 		) %>%
-		IntegrateData(normalization.method = "SCT", verbose = FALSE)
+		IntegrateData(normalization.method = "SCT", verbose = verbose)
 }
 
 #' Get adjusted counts for unwanted variation
@@ -1878,17 +1879,17 @@ get_adjusted_counts_for_unwanted_variation_sc = function(.data,
 	if(.data %>% colnames %in% c("x", "y") %>% any)
 		stop("tidysc says: column named \"x\" or \"y\" are banned from seurat metadata because will crash the SCTransform function.")
 
-	# Check if package is installed, otherwise install
-	if ("benchmarkme" %in% rownames(installed.packages()) == FALSE) {
-		writeLines("Installing benchmarkme needed for benchmarkme")
-		install.packages("benchmarkme", repos = "https://cloud.r-project.org")
-	}
-
-	if(Sys.info()[['sysname']] == "Windows")
-		available_Gb_ram =
-			as.numeric(gsub("\r","",gsub("FreePhysicalMemory=","",system('wmic OS get FreePhysicalMemory /Value',intern=TRUE)[3])))/1024/1024
-	else 	available_Gb_ram =  benchmarkme::get_ram() / 10 * 9
-	options(future.globals.maxSize = available_Gb_ram * 1000 * 1024 ^ 2)
+	# # Check if package is installed, otherwise install
+	# if ("benchmarkme" %in% rownames(installed.packages()) == FALSE) {
+	# 	writeLines("Installing benchmarkme needed for benchmarkme")
+	# 	install.packages("benchmarkme", repos = "https://cloud.r-project.org")
+	# }
+	# 
+	# if(Sys.info()[['sysname']] == "Windows")
+	# 	available_Gb_ram =
+	# 		as.numeric(gsub("\r","",gsub("FreePhysicalMemory=","",system('wmic OS get FreePhysicalMemory /Value',intern=TRUE)[3])))/1024/1024
+	# else 	available_Gb_ram =  benchmarkme::get_ram() / 10 * 9
+	# options(future.globals.maxSize = available_Gb_ram * 1000 * 1024 ^ 2)
 
 	# Update on tibble
 	.data = .data %>% update_object_sc
@@ -1904,7 +1905,6 @@ get_adjusted_counts_for_unwanted_variation_sc = function(.data,
 
 	# Get character array of variable to regress
 	variables_to_regress = parse_formula(.formula) %>% gsub("integrate\\(|\\)", "", .)
-
 
 	variables_to_regress_no_sample =
 		variables_to_regress %>%
@@ -1929,51 +1929,29 @@ get_adjusted_counts_for_unwanted_variation_sc = function(.data,
 	seurat_object =
 		.data %>%
 		attr("seurat") %>%
-
+		.[[1]] %>%
+		
 		# If Integration split the object before batch correct
-		ifelse_pipe(
-			length(.integrate_column) > 0 && .integrate_column %in% variables_to_regress,
-			~ .x %>%
-				map(~ .x %>% SplitObject(split.by = "orig.ident")) %>%
-				unlist
+		when(
+			length(.integrate_column) > 0 && .integrate_column %in% variables_to_regress ~ 
+				 SplitObject(., split.by = .integrate_column),
+			~ (.) %>% list
 		) %>%
 
 		# Scale data for covariates other than sample
-		map(~ {
-
-			# library(future)
-			# plan("multiprocess", workers = 25)
-
-			SCTransform(.x,
-									verbose = verbose,
-									assay = "RNA",
-									vars.to.regress = variables_to_regress_no_sample
-									)
-					# Needed for the use of ... for a function that has ... already for another thing
-			# args = list(
-			# 	object = .x,
-			# 	verbose = verbose,
-			# 	assay = "RNA",
-			# 	vars.to.regress = variables_to_regress_no_sample
-			# ) %>%
-			# c(arguments)
-			# exec(SCTransform, !!!args, .env = parent.frame())
-			#
-			#
-			# 		do.call(SCTransform, c(
-			# 			.x,
-			# 			verbose = verbose,
-			# 			assay = "RNA",
-			# 			vars.to.regress = variables_to_regress_no_sample,
-			# 			arguments
-			# 		))
-		}
-			) %>%
+		map(~ SCTransform(
+				.x,
+				verbose = verbose,
+				assay = "RNA",
+				vars.to.regress = variables_to_regress_no_sample
+				)
+		) %>%
 
 		# INTEGRATION - If sample within covariates Eliminate sample variation with integration
-		ifelse_pipe(
-			length(.integrate_column) > 0 && .integrate_column %in% variables_to_regress ,
-			~ .x %>%	do_integration_seurat %>%	list
+		when(
+			length(.integrate_column) > 0 && .integrate_column %in% variables_to_regress  ~ 
+				do_integration_seurat(.) %>%	list,
+			~ (.) %>% list
 		)
 
 	seurat_object %>%
@@ -2055,7 +2033,61 @@ add_adjusted_counts_for_unwanted_variation_sc = function(.data,
 #' @return A tt tt object
 #'
 #' @export
-get_cluster_annotation_SNN_sc = function(.data, ...) {
+get_cluster_annotation_SNN_automatic = function(.data, ...) {
+	# Update on tibble
+	.data = .data %>% update_object_sc
+	
+	# Cell column name
+	.cell = .data %>% attr("parameters")  %$% .cell
+	
+	# Add PCA if not present
+	#.data  = .data %>% add_reduced_dimensions_PCA(.dims = 50)
+	
+	# Evaluate ...
+	arguments <- list(...)
+	
+	output_dir = tempfile(pattern = "IKAP_", tmpdir = ".", fileext = "")
+	# Calculate the new Seurat object
+	seurat_object =
+		.data %>%
+		attr("seurat") %>%
+		.[[1]] %>%
+		IKAP(out.dir = output_dir, k.max = 15)
+	
+	
+	# seurat_object@meta.data$cluster = my_obj@meta.data$seurat_clusters
+	
+	seurat_object %>%
+		`@` (meta.data) %>%
+				as_tibble(rownames = quo_name(.cell)) %>%
+			select(.cell, matches("PC[1-9]+K[0-9]+")) %>%
+			#%>%
+			#	mutate_if(is.factor, as.character)
+		# ) %>%
+		# mutate_if(is.character, as.factor) %>%
+		
+		# Add back the attributes objects
+		add_attr(seurat_object, "seurat") %>%
+		add_attr(.data %>% attr("parameters"), "parameters")
+	
+}
+
+
+#' Get cluster information of single cells
+#'
+#' @import dplyr
+#' @import tidyr
+#' @import tibble
+#' @import Seurat
+#' @importFrom purrr map
+#' @importFrom purrr map_dfr
+#'
+#' @param .data A tt object
+#'
+#' @return A tt tt object
+#'
+#' @export
+get_cluster_annotation_SNN_sc = function(.data, resolution, ...) {
 	# Update on tibble
 	.data = .data %>% update_object_sc
 
@@ -2063,7 +2095,7 @@ get_cluster_annotation_SNN_sc = function(.data, ...) {
 	.cell = .data %>% attr("parameters")  %$% .cell
 
 	# Add PCA if not present
-	.data  = .data %>% add_reduced_dimensions_PCA(.dims = 50)
+	#.data  = .data %>% add_reduced_dimensions_PCA(.dims = 50)
 
 	# Evaluate ...
 	arguments <- list(...)
@@ -2075,10 +2107,10 @@ get_cluster_annotation_SNN_sc = function(.data, ...) {
 		map(~ {
 
 			# Find neighbours
-			my_obj = (.) %>% FindNeighbors()
+			my_obj = (.) %>% RunPCA(npcs = 15) %>% FindNeighbors() %>% FindClusters(method = "igraph", resolution =resolution )
 
 			# Needed for the use of ... for a function that has ... already for another thing
-			my_obj = do.call(FindClusters, c(my_obj, method = "igraph", arguments))
+			#my_obj = do.call(FindClusters, c(my_obj, , arguments))
 
 			# Add renamed annotation
 			my_obj@meta.data$cluster = my_obj@meta.data$seurat_clusters
@@ -2155,11 +2187,11 @@ add_cluster_annotation_SNN_sc = function(.data, ...) {
 #'
 #' @export
 get_cell_type_annotation_sc = function(.data) {
+	
 	# Check if package is installed, otherwise install
 	if ("SingleR" %in% rownames(installed.packages()) == FALSE) {
 		writeLines("Installing SingleR")
 		devtools::install_github('dviraran/SingleR')
-
 	}
 
 	library(SingleR)

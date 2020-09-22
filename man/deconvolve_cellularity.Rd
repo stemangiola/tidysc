@@ -4,7 +4,7 @@
 \alias{deconvolve_cellularity}
 \title{Get cell type proportions from samples}
 \usage{
-deconvolve_cellularity(.data, action = "add")
+deconvolve_cellularity(.data, species, action = "add")
 }
 \arguments{
 \item{.data}{A `tbl` formatted as | <SAMPLE> | <TRANSCRIPT> | <COUNT> | <...> |}

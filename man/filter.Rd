@@ -72,5 +72,8 @@ The following methods are currently available in loaded packages:
 }
 \seealso{
 [filter_all()], [filter_if()] and [filter_at()].
+
+Other single table verbs: 
+\code{\link{select}()}
 }
 \concept{single table verbs}
