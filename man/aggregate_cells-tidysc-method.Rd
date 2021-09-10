@@ -4,7 +4,12 @@
 \alias{aggregate_cells,tidysc-method}
 \title{aggregate_cells}
 \usage{
-\S4method{aggregate_cells}{tidysc}(.data, .sample = NULL)
+\S4method{aggregate_cells}{tidysc}(
+  .data,
+  .sample = NULL,
+  slot = "data",
+  aggregation_function = Matrix::rowSums
+)
 }
 \arguments{
 \item{.data}{A `tbl` formatted as | <SAMPLE> | <TRANSCRIPT> | <COUNT> | <...> |}

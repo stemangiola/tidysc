@@ -10,6 +10,7 @@ get_adjusted_counts_for_unwanted_variation_sc(
   do.scale = F,
   do.center = F,
   verbose = T,
+  reference = NULL,
   ...
 )
 }

@@ -5,7 +5,12 @@
 \alias{aggregate_cells}
 \title{Creates a `tt` object}
 \usage{
-aggregate_cells(.data, .sample = NULL)
+aggregate_cells(
+  .data,
+  .sample = NULL,
+  slot = "data",
+  aggregation_function = Matrix::rowSums
+)
 }
 \arguments{
 \item{.data}{A `tbl` formatted as | <SAMPLE> | <TRANSCRIPT> | <COUNT> | <...> |}

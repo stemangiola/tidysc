@@ -575,8 +575,8 @@ run_singleR = function(seurat,
 	f = !is.na(clusters)
 	
 	# Get references
-	hpca.se <- SingleR::HumanPrimaryCellAtlasData()
-	blueprint <- SingleR::BlueprintEncodeData()
+	hpca.se <- celldex::HumanPrimaryCellAtlasData()
+	blueprint <- celldex::BlueprintEncodeData()
 	MouseRNAseq = MouseRNAseqData()
 	
 	# Create ref list

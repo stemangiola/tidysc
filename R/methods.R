@@ -299,7 +299,7 @@ tidysc_cell_ranger.default <- function(dir_names,
 #' @export
 #'
 setGeneric("aggregate_cells", function(.data,
-                                .sample = NULL
+                                .sample = NULL, slot = "data", aggregation_function = Matrix::rowSums
                              )
   standardGeneric("aggregate_cells"))
 
@@ -313,7 +313,7 @@ setGeneric("aggregate_cells", function(.data,
 #' @return A `aggregate_cells` object
 #'
 setMethod("aggregate_cells", "tidysc",  function(.data, # .data is incompatible with `map`
-                                          .sample = NULL) {
+                                          .sample = NULL, slot = "data", aggregation_function = Matrix::rowSums) {
 	# # Normalise
 	# .data_ = .data_ %>% scale_abundance()
   
@@ -329,7 +329,7 @@ setMethod("aggregate_cells", "tidysc",  function(.data, # .data is incompatible 
   .abundance = .data %>% attr("parameters") %$% .abundance
   
 
-  # Muy assays
+  # My assays
   assay_names_of_choice =	.data %>% 	attr("seurat") %>% 	.[[1]] %>% 	`@` (assays) %>% 	names %>% .[1:2] %>% na.omit() %>% tail(1)
   
   # Validate data frame
@@ -361,29 +361,34 @@ setMethod("aggregate_cells", "tidysc",  function(.data, # .data is incompatible 
 #' @inheritParams aggregate_cells
 #' @return A `aggregate_cells` object
 #'
-setMethod("aggregate_cells", "tidyseurat",  function(.data) {
+setMethod("aggregate_cells", "Seurat",  function(.data, .sample = NULL, slot = "data", aggregation_function = Matrix::rowSums) {
 
+	.sample = enquo(.sample)
+	
 	.data %>%
 		
-		tidyseurat::nest(data = -sample) %>%
+		tidyseurat::nest(data = -!!.sample) %>%
 		mutate(data = map(data, ~ 
 				
 			# loop over assays
 			map2(.x@assays, names(.x@assays),
 					 
 					 # Get counts
-					 ~ .x@data %>%
-					 	Matrix::rowSums(na.rm = T) %>%
+					 ~ GetAssayData(.x, slot = slot) %>%
+					 	aggregation_function(na.rm = T) %>%
 					 	tibble::enframe(
 					 		name  = "transcript",
 					 		value = sprintf("abundance_%s", .y)
-					 	)
+					 	) %>%
+					 	mutate(transcript = as.character(transcript))
 			) %>%
-			Reduce(function(...) left_join(..., by=c("transcript")), .)
+			Reduce(function(...) full_join(..., by=c("transcript")), .)
 			
 		)) %>%
-		left_join(.data %>% tidyseurat::as_tibble() %>% nanny::subset(sample)) %>%
-		unnest(data) 
+		left_join(.data %>% tidyseurat::as_tibble() %>% nanny::subset(!!.sample)) %>%
+		tidyseurat::unnest(data) %>%
+		
+		drop_class("tidyseurat_nested")
 	
 })
 
@@ -562,7 +567,7 @@ cluster_elements.tidysc <-  function(.data,
 }
 
 #' @export
-cluster_elements.tidyseurat <-  function(.data,
+cluster_elements.Seurat <-  function(.data,
 																		 resolution = 0.8,
 																		 automatic_resolution = FALSE,
 																		 action = "add", ...)
@@ -1037,6 +1042,9 @@ adjust_abundance <- function(.data,
                              do.center = F,
                              verbose = T,
                              action = "add",
+														 reference_samples = NULL,
+														 assay = counts@active.assay,
+														 
                              ...) {
   UseMethod("adjust_abundance", .data)
 }
@@ -1047,6 +1055,9 @@ adjust_abundance.default <-  function(.data,
                                       do.center = F,
                                       verbose = T,
                                       action = "add",
+																			reference_samples = NULL,
+																			assay = counts@active.assay,
+																			
                                       ...)
 {
   print("This function cannot be applied to this object")
@@ -1059,6 +1070,9 @@ adjust_abundance.tbl_df = adjust_abundance.tidysc <-
            do.center = F,
            verbose = T,
            action = "add",
+  				 reference_samples = NULL,
+  				 assay = counts@active.assay,
+  				 
            ...)
   {
 
@@ -1087,17 +1101,17 @@ adjust_abundance.tbl_df = adjust_abundance.tidysc <-
       )
   }
 #' @export
-adjust_abundance.tidyseurat <-
+adjust_abundance.Seurat <-
 	function(.data,
 					 .formula,
 					 do.scale = F,
 					 do.center = F,
 					 verbose = T,
 					 action = "add",
+					 reference_samples = NULL,
+					 assay = .data@active.assay,
 					 ...)
 	{
-		
-		
 		
 		# Get integrate column
 		.integrate_column = parse_formula(.formula) %>% grep("integrate(", ., fixed = T, value = T) %>% gsub("integrate\\(|\\)", "", .)
@@ -1130,18 +1144,17 @@ adjust_abundance.tidyseurat <-
 			map(~ SCTransform(
 				.x,
 				verbose = verbose,
-				assay = "RNA",
-				vars.to.regress = variables_to_regress_no_sample
+				assay = assay,
+				vars.to.regress = variables_to_regress_no_sample,
+				return.only.var.genes = FALSE
 			)) %>%
 			
 			# INTEGRATION - If sample within covariates Eliminate sample variation with integration
 			when(
 				length(.integrate_column) > 0 && .integrate_column %in% variables_to_regress  ~ 
-					do_integration_seurat(.),
+					do_integration_seurat(., reference = reference_samples),
 				~ (.)[[1]]
-			) %>%
-			
-			tidyseurat::tidy()
+			) 
 }
 
 #' Aggregates multiple counts from the same samples (e.g., from isoforms), concatenates other character columns, and averages other numeric columns
@@ -1306,14 +1319,14 @@ aggregate_duplicates.tbl_df = aggregate_duplicates.tidysc <-
 #'
 deconvolve_cellularity <- function(.data,
 																	 species,
-																	 
+																	 clusters = NULL,
                                action = "add") {
   UseMethod("deconvolve_cellularity", .data)
 }
 #' @export
 deconvolve_cellularity.default <-  function(.data,
 																						species,
-																						
+																						clusters = NULL,
                                         action = "add")
 {
   print("This function cannot be applied to this object")
@@ -1322,7 +1335,7 @@ deconvolve_cellularity.default <-  function(.data,
 deconvolve_cellularity.tbl_df = deconvolve_cellularity.tidysc <-
   function(.data,
   				 species,
-  				 
+  				 clusters = NULL,
            action = "add")  {
 
     if (action == "add")
@@ -1339,8 +1352,10 @@ deconvolve_cellularity.tbl_df = deconvolve_cellularity.tidysc <-
 deconvolve_cellularity.tidyseurat <-
 	function(.data,
 					 species,
+					 clusters = NULL,
 					 action = "add")  {
 		
+		clusters = enquo(clusters)
 		
 		# Check if package is installed, otherwise install
 		if ("SingleR" %in% rownames(installed.packages()) == FALSE) {
@@ -1351,8 +1366,8 @@ deconvolve_cellularity.tidyseurat <-
 		library(SingleR)
 		
 		my_clusters = switch(
-			"cluster" %in% (.data@meta.data %>% colnames) %>% `!` %>% sum(1),
-			.data@meta.data$cluster %>% as.character,
+			quo_name(clusters) %in% (.data@meta.data %>% colnames) %>% `!` %>% sum(1),
+			.data %>% tidyseurat::pull(!!clusters) %>% as.character,
 			NULL
 		)
 		
@@ -1382,10 +1397,10 @@ deconvolve_cellularity.tidyseurat <-
 						ct_class_simple[
 							match(
 								.x %>% rownames ,
-								ct_class_simple %>% pull(!!.cell)),
+								ct_class_simple %>% pull(cell)),
 						] %>%
 							mutate_if(is.character, as.factor) %>%
-							select(-!!.cell)
+							select(-cell)
 					),
 				
 				# Else, bind based on cluster
@@ -1674,4 +1689,46 @@ extract_abundance.tidysc <-
   		)
   }
 
+#' @export
+#'
+score_gene_set <- function(.data, signature = "conservative") {
+	UseMethod("score_tcell_exhaustion", .data)
+}
 
+#' @importFrom Seurat DefaultAssay
+#' @export
+score_gene_set.tidyseurat = function(.data, signature = "exhaustion_robust"){
+	
+	# https://github.com/asmagen/robustSingleCell
+	markers_small <- c('Pdcd1', 'Cd244', 'Havcr2', 'Ctla4', 'Cd160', 'Lag3', 'Tigit', 'Cd96')
+	
+	# https://github.com/sunnyzwu/stromal_subclasses/tree/master/05_gene_signature_analysis
+	markers_big = c("PDCD1", "CCL3", "PTPN13", "CASP3", "CD244", "GP49A", "NR4A2", "TRG", "EEA1", "GPD2", "Sep-04", "FASLG", "CD160", "IFIH1", "TANK", "MDFIC", "WBP5", "PTGER4", "SH2D2A", "4631408O11RIK", "NRP1", "ISG20", "GPR56", "CD7", "1110067D22RIK", "CCL4", "GAS2", "ENTPD1", "GPR65", "EOMES", "LITAF", "SERPINA3G", "CCRL2", "PTGER2", "FYN", "NR1I4", "NFATC1", "1810035L17RIK", "RSAD2", "FGL2", "1300007C21RIK", "COCH", "D17H6S56E-5", "PBX3", "LO", "SFRS2IP", "PERP", "LAG3", "SPP1", "TNFRSF1B", "LOC381765", "BC039093", "CD200", "CXCL10", "H2-T23", "BCL2A1B", "IIGP1", "AHR", "2010100O12RIK", "C330007P06RIK", "RNF11", "LYCAT", "ADAM19", "CD9", "ART3", "LILRB4", "TRIM17", "5830471E12RIK", "HIST3H2A", "IFI204", "PGLYRP1", "GM1066", "IFIT1", "TCRB-J", "TNFRSF7", "GZMK", "MLLT3", "RGS16", "IFIT3", "CBX6", "ITM2C", "ALCAM", "BCL2A1A", "IRF8", "RBL2", "ITGAV", "CASP1", "CTLA4", "EIF3S1", "SPG21", "CAPZB", "ACADL", "MX1", "NDUFA5", "RASA1", "SERPINB6A", "RCN1", "TNFSF11", "HCCS", "CCR5", "2310015N07RIK", "CPEB2", "NUCB1")
+	
+	# Choose my signature
+	my_markers = 
+		signature %>%
+		when(
+			. == "exhaustion_blackburn" ~ markers_big,
+			. == "exhaustion_robust" ~ markers_small,
+			~ signature
+		)
+	
+	# Get counts
+	my_counts = .data@assays[[DefaultAssay(.data)]]@data
+	
+	# Calculate mean score
+	score_df = 
+		my_counts[tolower(rownames(my_counts)) %in% tolower(my_markers),] %>%
+		as.matrix() %>%
+		
+		# If is exp log it
+		when(max(.) > 10 ~ log1p(.), ~ (.)) %>%
+		colMeans() %>%
+		enframe(name = "cell", value = signature)
+	
+	# Integrate
+	.data %>%
+		tidyseurat::left_join(score_df, by = "cell")
+	
+}

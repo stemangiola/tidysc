@@ -11,6 +11,8 @@ adjust_abundance(
   do.center = F,
   verbose = T,
   action = "add",
+  reference_samples = NULL,
+  assay = counts@active.assay,
   ...
 )
 }

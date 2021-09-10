@@ -48,7 +48,7 @@ aggregate_duplicated_transcripts_sc =
 			ret
 		}
 
-		# Through warning if there are logicals of factor in the data frame
+		# Through warning if there are logical of factor in the data frame
 		# because they cannot be merged if they are not unique
 		if ((lapply(.data, class) %>% unlist %in% c("logical", "factor")) %>% any) {
 			warning("for aggregation fctors and logical columns were converted to character")
@@ -265,6 +265,7 @@ create_tt_from_seurat = function(seurat_object,
 																 .cell = `cell`,
 																 species,
 																 genome = switch(tolower(species),  "human" = "hg38", "mouse" = "mm10", stop("tidysc says: species not present"))) {
+	
 	message("Converting Seurat object back to tibble")
 
 	# Parse column names
@@ -851,41 +852,7 @@ create_tt_from_tibble_wide_sc = function(.data,
 																	 !!.cell,
 																	 min.transcripts = min.transcripts,
 																	 min.cells = min.cells,
-																	 ...) %>%
-
-		# Create tt object from seurat
-		list %>%
-		create_tt_from_seurat(
-			min.transcripts = min.transcripts,
-			min.cells = min.cells,
-			high.mito.thresh = high.mito.thresh,
-			high.umi.thresh = high.umi.thresh,
-			genome = genome,
-			.sample = !!.sample,
-			.cell = !!.cell,
-			species = species
-		) %>%
-
-		# Eliminate orig.ident column, because same as sample
-		select(-contains("orig.ident")) %>%
-	# %>%
-
-		# Add parameters attribute
-
-		# Attach attributes
-
-		add_attr(
-			(.) %>%
-				attr("parameters") %>%
-				c(	.transcript =	(function(x, v) enquo(v))(x, !!as.symbol("transcript"))	),
-			"parameters"
-		) %>%
-		add_attr(
-			(.) %>%
-				attr("parameters") %>%
-				c(	.abundance =	(function(x, v) enquo(v))(x, !!as.symbol("abundance"))	),
-			"parameters"
-		)
+																	 ...) 
 
 
 
@@ -918,6 +885,7 @@ create_tt_from_cellRanger_sc <- function(dir_names,
 																				 high.umi.thresh = 10000,
 																				 species,
 																				 genome = switch(tolower(species),  "human" = "hg38", "mouse" = "mm10", stop("tidysc says: species not present")) ) {
+	
 	# n_cores <- system("nproc", intern = TRUE) %>%
 	# 	as.integer() %>%
 	# 	`-`(2)
@@ -1820,7 +1788,7 @@ add_reduced_dimensions_TSNE = function(.data, .dims = 10) {
 #' @param .data A seurat list
 #'
 #' @return A tt seurat object
-do_integration_seurat = function(seurat_list) {
+do_integration_seurat = function(seurat_list, reference = NULL) {
 	verbose = FALSE
 	my_features = seurat_list %>% SelectIntegrationFeatures(nfeatures = 3000, verbose = verbose)
 
@@ -1838,11 +1806,15 @@ do_integration_seurat = function(seurat_list) {
 	# Another parameter that is important if I have small number of cells
 	k.filter <- min(200, min(sapply(prep_integration, ncol)))
 
+	# Convert reference names in reference indexes
+	if(!is.null(reference)) reference <- which(names(seurat_list) %in% reference)
+
 	# Integrate
 	prep_integration %>%
 		FindIntegrationAnchors(
 			normalization.method = "SCT",
 			anchor.features = my_features,
+			reference = reference,
 			verbose = verbose,
 			dims = 1:dims,
 			k.filter = k.filter
@@ -1873,6 +1845,7 @@ get_adjusted_counts_for_unwanted_variation_sc = function(.data,
 																												 do.scale = F,
 																												 do.center = F,
 																												 verbose = T,
+																												 reference = NULL,
 																												 ...) {
 
 	# Check if there are column names x or y and stop
@@ -1950,7 +1923,7 @@ get_adjusted_counts_for_unwanted_variation_sc = function(.data,
 		# INTEGRATION - If sample within covariates Eliminate sample variation with integration
 		when(
 			length(.integrate_column) > 0 && .integrate_column %in% variables_to_regress  ~ 
-				do_integration_seurat(.) %>%	list,
+				do_integration_seurat(., reference= reference) %>%	list,
 			~ (.) %>% list
 		)
 

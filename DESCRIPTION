@@ -28,7 +28,10 @@ Imports:
     RANN,
     lifecycle,
     Seurat,
-    SingleR
+    SingleR,
+    PRROC,
+    WriteXLS,
+    rpart.plot
 Suggests: 
     parallel,
     testthat,

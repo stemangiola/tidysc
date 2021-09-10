@@ -4,7 +4,7 @@
 \alias{do_integration_seurat}
 \title{Integrate many seurat objects}
 \usage{
-do_integration_seurat(seurat_list)
+do_integration_seurat(seurat_list, reference = NULL)
 }
 \arguments{
 \item{.data}{A seurat list}
