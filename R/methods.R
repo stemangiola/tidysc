@@ -365,13 +365,39 @@ setMethod("aggregate_cells", "Seurat",  function(.data, .sample = NULL, slot = "
 
 	.sample = enquo(.sample)
 	
+	# # New cell names
+	# cn = 
+	# 	.data %>% 
+	# 	unite("cn___", !!.sample, sep="___") %>%
+	# 	pull("cn___")
+	# 
+	# map2(
+	# 		as.list(.data@assays) ,
+	# 		names(.data@assays),
+	# 		~ {
+	# 			print(.y)
+	# 			.x = .x@counts %>% as.matrix()
+	# 			colnames(.x) = cn
+	# 
+	# 			t(.x) %>% 
+	# 				combineByRow(sum) %>% 	
+	# 				t() %>% 
+	# 				as.data.frame() %>%
+	# 				as_tibble(rownames="transcript") %>% 
+	# 				gather(sample___, !!as.symbol(.y)) 
+	# 		}
+	# 	) %>%
+	# 		reduce(left_join, by=c("transcript", "sample___"))
+	
 	.data %>%
-		
+	
 		tidyseurat::nest(data = -!!.sample) %>%
+		mutate(.aggregated_cells = map_int(data, ~ ncol(.x))) %>% 
 		mutate(data = map(data, ~ 
 				
 			# loop over assays
-			map2(.x@assays, names(.x@assays),
+			map2(
+				.x@assays, names(.x@assays),
 					 
 					 # Get counts
 					 ~ GetAssayData(.x, slot = slot) %>%
@@ -380,7 +406,7 @@ setMethod("aggregate_cells", "Seurat",  function(.data, .sample = NULL, slot = "
 					 		name  = "transcript",
 					 		value = sprintf("abundance_%s", .y)
 					 	) %>%
-					 	mutate(transcript = as.character(transcript))
+					 	mutate(transcript = as.character(transcript)) 
 			) %>%
 			Reduce(function(...) full_join(..., by=c("transcript")), .)
 			
@@ -1103,7 +1129,7 @@ adjust_abundance.tbl_df = adjust_abundance.tidysc <-
 #' @export
 adjust_abundance.Seurat <-
 	function(.data,
-					 .formula,
+					 .formula = NULL,
 					 do.scale = F,
 					 do.center = F,
 					 verbose = T,
@@ -1732,3 +1758,140 @@ score_gene_set.tidyseurat = function(.data, signature = "exhaustion_robust"){
 		tidyseurat::left_join(score_df, by = "cell")
 	
 }
+
+#' @import ggplot2
+#' @import dplyr
+#' @import tidyr
+#' @import purrr
+#' @import DropletUtils
+#' @import EnsDb.Hsapiens.v86
+#' @import AnnotationDbi
+#' @import tidySingleCellExperiment
+#' @import scuttle
+#' @importFrom SingleCellExperiment counts
+#' 
+#' 
+#' @export
+drop_empty_and_dead = function(.data){
+	
+	.data = .data %>% as.SingleCellExperiment()
+	
+	barcode_ranks = 
+		.data %>%
+		nest(sce = -sample) %>% 
+		mutate(barcodeRanks = map(
+			sce, 
+			~ {
+				
+				.x %>% counts() %>% DropletUtils::barcodeRanks()
+			}
+			
+		)) %>% 
+		mutate(
+			barcodeRanks_df = map(
+				barcodeRanks,
+				~ .x %>% as_tibble(rownames = "cell") %>% mutate(
+					knee =  metadata(.x)$knee,
+					inflection =  metadata(.x)$inflection
+				)
+			)
+		) %>%
+		
+		dplyr::select(-sce, -barcodeRanks) %>% 
+		unnest(barcodeRanks_df) %>%
+		arrange(rank) 
+	
+	# # Plot bar-codes ranks
+	# plot_barcode_ranks =
+	# 	barcode_ranks%>%
+	# 	sample_frac(0.005) %>%
+	# 	ggplot2::ggplot(aes(rank, total)) +
+	# 	geom_point() +
+	# 	facet_wrap(~sample, nrow=2) +
+	# 	geom_line(aes(rank, fitted), color="red") +
+	# 	geom_hline(aes(yintercept = knee), color="dodgerblue") +
+	# 	geom_hline(aes(yintercept = inflection), color="forestgreen") +
+	# 	scale_x_log10() +
+	# 	scale_y_log10()
+	
+	counts_real_cells = 
+		.data %>%
+		inner_join(
+			barcode_ranks %>%
+				tidySingleCellExperiment::filter(total>inflection),
+			by = c("cell", "sample")
+		)
+	
+	drop_dead(counts_real_cells)
+
+
+}
+
+#' @export
+drop_dead = function(counts_real_cells){
+	
+	is_seurat = is(counts_real_cells, "Seurat")
+	
+	if(is_seurat) counts_real_cells = as.SingleCellExperiment(counts_real_cells)
+	
+	which_genes_are_mitochondrion = 
+		rownames(counts_real_cells) %>% 
+		when(
+			length(grep("^MT-", .)) > 1 ~ grep("^MT-", .),
+			~ {
+				# Annotate with mito - Gene-product location
+				location <- mapIds(
+					EnsDb.Hsapiens.v86, 
+					keys=rownames(counts_real_cells), 
+					column="SEQNAME",
+					keytype="GENEID"
+				)
+				
+				which(location=="MT")
+			}
+		)
+	
+	
+	counts_mito = 
+		counts_real_cells %>%
+		
+		nest(data = -sample) %>%
+		mutate(data = map(
+			data, 
+			~ .x %>%
+				
+				# Join mitochondrion statistics
+				left_join(
+					scuttle::perCellQCMetrics(., subsets=list(Mito=which_genes_are_mitochondrion)) %>%
+						as_tibble(rownames="cell"),
+					by="cell"
+				) %>%
+				
+				# Label cells
+				tidySingleCellExperiment::mutate(high_mitochondrion = isOutlier(subsets_Mito_percent, type="higher")) %>%
+				
+				# Join mitochondrion statistics
+				tidySingleCellExperiment::mutate(mito_RPS = PercentageFeatureSet(
+					as.Seurat(., data = NULL) %>% 
+						tidyseurat::tidy() %>% 
+						tidyseurat::mutate(nCount_RNA = sum), 
+					pattern = "^RPS|^RPL")[,1]
+				) %>%
+				
+				# Label cells
+				tidySingleCellExperiment::mutate(high_RPS = isOutlier(mito_RPS, type="higher"))
+			
+		)) %>%
+		unnest(data) 
+	
+	return = 
+		counts_mito %>% 
+		tidySingleCellExperiment::filter(!high_mitochondrion) 
+	
+	
+	if(is_seurat) return = as.Seurat(return)
+	
+	return
+	
+}
+

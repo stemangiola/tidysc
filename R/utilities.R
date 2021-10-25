@@ -628,3 +628,44 @@ run_singleR = function(seurat,
 		pivot_wider(values_from = c(label, `Cell type scores`), names_from = SingleR_DB)
 	
 }
+
+combineByRow <- function(m, fun = NULL) {
+	# Shown here
+	#https://stackoverflow.com/questions/8139301/aggregate-rows-in-a-large-matrix-by-rowname
+	
+	m <- m[ order(rownames(m)), ]
+	
+	## keep track of previous row name
+	prev <- rownames(m)[1]
+	i.start <- 1
+	i.end <- 1
+	
+	## cache the rownames -- profiling shows that it takes
+	## forever to look at them
+	m.rownames <- rownames(m)
+	stopifnot(all(!is.na(m.rownames)))
+	
+	
+	## go through matrix in a loop, as we need to combine some unknown
+	## set of rows
+	for (i in 2:(1+nrow(m))) {
+		
+		curr <- m.rownames[i]
+		
+		## if we found a new row name (or are at the end of the matrix),
+		## combine all rows and mark invalid rows
+		if (prev != curr || is.na(curr)) {
+			if (i.start < i.end) {
+				m[i.start,] <- apply(m[i.start:i.end,], 2, fun)
+				m.rownames[(1+i.start):i.end] <- NA
+			}
+			
+			prev <- curr
+			i.start <- i
+		} else {
+			i.end <- i
+		}
+	}
+	
+	m[ which(!is.na(m.rownames)),]
+}
