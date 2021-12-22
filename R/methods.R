@@ -476,7 +476,7 @@ setMethod("aggregate_cells", "SingleCellExperiment",  function(.data, .sample = 
 		left_join(.data %>% tidySingleCellExperiment::as_tibble() %>% nanny::subset(!!.sample), by = quo_names(.sample)) %>%
 		tidySingleCellExperiment::unnest(data) %>%
 		
-		drop_class("tidyseurat_nested")
+		drop_class("tidySingleCellExperiment_nested")
 	
 })
 
