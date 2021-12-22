@@ -418,6 +418,69 @@ setMethod("aggregate_cells", "Seurat",  function(.data, .sample = NULL, slot = "
 	
 })
 
+#' aggregate_cells
+#'
+#'
+#' @inheritParams aggregate_cells
+#' @return A `aggregate_cells` object
+#'
+setMethod("aggregate_cells", "SingleCellExperiment",  function(.data, .sample = NULL, slot = "data", aggregation_function = Matrix::rowSums) {
+
+	.sample = enquo(.sample)
+	
+	# # New cell names
+	# cn = 
+	# 	.data %>% 
+	# 	unite("cn___", !!.sample, sep="___") %>%
+	# 	pull("cn___")
+	# 
+	# map2(
+	# 		as.list(.data@assays) ,
+	# 		names(.data@assays),
+	# 		~ {
+	# 			print(.y)
+	# 			.x = .x@counts %>% as.matrix()
+	# 			colnames(.x) = cn
+	# 
+	# 			t(.x) %>% 
+	# 				combineByRow(sum) %>% 	
+	# 				t() %>% 
+	# 				as.data.frame() %>%
+	# 				as_tibble(rownames="transcript") %>% 
+	# 				gather(sample___, !!as.symbol(.y)) 
+	# 		}
+	# 	) %>%
+	# 		reduce(left_join, by=c("transcript", "sample___"))
+	
+	.data %>%
+		
+		tidySingleCellExperiment::nest(data = -!!.sample) %>%
+		mutate(.aggregated_cells = map_int(data, ~ ncol(.x))) %>% 
+		mutate(data = map(data, ~ 
+												# loop over assays
+												map2(
+													as.list(assays(.x)), names(.x@assays),
+													
+													# Get counts
+													~  .x %>%
+														aggregation_function(na.rm = T) %>%
+														tibble::enframe(
+															name  = "transcript",
+															value = sprintf("abundance_%s", .y)
+														) %>%
+														mutate(transcript = as.character(transcript)) 
+												) %>%
+												Reduce(function(...) full_join(..., by=c("transcript")), .)
+											
+		)) %>%
+		left_join(.data %>% tidySingleCellExperiment::as_tibble() %>% nanny::subset(!!.sample), by = quo_names(.sample)) %>%
+		tidySingleCellExperiment::unnest(data) %>%
+		
+		drop_class("tidyseurat_nested")
+	
+})
+
+
 #' Normalise the counts of transcripts/genes
 #'
 #' \lifecycle{experimental}
