@@ -361,33 +361,14 @@ setMethod("aggregate_cells", "tidysc",  function(.data, # .data is incompatible 
 #' @inheritParams aggregate_cells
 #' @return A `aggregate_cells` object
 #'
-setMethod("aggregate_cells", "Seurat",  function(.data, .sample = NULL, slot = "data", aggregation_function = Matrix::rowSums) {
+setMethod("aggregate_cells", "Seurat",  function(.data, .sample = NULL, slot = "data", assays = NULL, aggregation_function = Matrix::rowSums) {
 
 	.sample = enquo(.sample)
 	
-	# # New cell names
-	# cn = 
-	# 	.data %>% 
-	# 	unite("cn___", !!.sample, sep="___") %>%
-	# 	pull("cn___")
-	# 
-	# map2(
-	# 		as.list(.data@assays) ,
-	# 		names(.data@assays),
-	# 		~ {
-	# 			print(.y)
-	# 			.x = .x@counts %>% as.matrix()
-	# 			colnames(.x) = cn
-	# 
-	# 			t(.x) %>% 
-	# 				combineByRow(sum) %>% 	
-	# 				t() %>% 
-	# 				as.data.frame() %>%
-	# 				as_tibble(rownames="transcript") %>% 
-	# 				gather(sample___, !!as.symbol(.y)) 
-	# 		}
-	# 	) %>%
-	# 		reduce(left_join, by=c("transcript", "sample___"))
+	# Subset only wanted assays
+	if(!is.null(assays)){
+		.data@assays = .data@assays[assays]
+	}
 	
 	.data %>%
 	
