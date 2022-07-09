@@ -9,6 +9,7 @@ aggregate_cells(
   .data,
   .sample = NULL,
   slot = "data",
+  assays = NULL,
   aggregation_function = Matrix::rowSums
 )
 }

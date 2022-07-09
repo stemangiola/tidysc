@@ -299,7 +299,7 @@ tidysc_cell_ranger.default <- function(dir_names,
 #' @export
 #'
 setGeneric("aggregate_cells", function(.data,
-                                .sample = NULL, slot = "data", aggregation_function = Matrix::rowSums
+                                .sample = NULL, slot = "data", assays = NULL, aggregation_function = Matrix::rowSums
                              )
   standardGeneric("aggregate_cells"))
 
@@ -313,7 +313,7 @@ setGeneric("aggregate_cells", function(.data,
 #' @return A `aggregate_cells` object
 #'
 setMethod("aggregate_cells", "tidysc",  function(.data, # .data is incompatible with `map`
-                                          .sample = NULL, slot = "data", aggregation_function = Matrix::rowSums) {
+                                          .sample = NULL, slot = "data", assays = NULL, aggregation_function = Matrix::rowSums) {
 	# # Normalise
 	# .data_ = .data_ %>% scale_abundance()
   
