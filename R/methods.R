@@ -367,6 +367,7 @@ setMethod("aggregate_cells", "Seurat",  function(.data, .sample = NULL, slot = "
 	
 	# Subset only wanted assays
 	if(!is.null(assays)){
+		DefaultAssay(.data) = assays[1]
 		.data@assays = .data@assays[assays]
 	}
 	
