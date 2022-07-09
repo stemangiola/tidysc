@@ -344,7 +344,7 @@ setMethod("aggregate_cells", "tidysc",  function(.data, # .data is incompatible 
                         
                       )
            ) %>%
-  	left_join(.data_ %>% drop_class(c("tidysc", "tt")) %>% nanny::subset(!!.sample)) %>%
+  	left_join(.data_ %>% drop_class(c("tidysc", "tt")) %>% subset(!!.sample)) %>%
   	unnest(data) 
   	
   	# %>%
@@ -411,7 +411,7 @@ setMethod("aggregate_cells", "Seurat",  function(.data, .sample = NULL, slot = "
 			Reduce(function(...) full_join(..., by=c("transcript")), .)
 			
 		)) %>%
-		left_join(.data %>% tidyseurat::as_tibble() %>% nanny::subset(!!.sample)) %>%
+		left_join(.data %>% tidyseurat::as_tibble() %>% subset(!!.sample)) %>%
 		tidyseurat::unnest(data) %>%
 		
 		drop_class("tidyseurat_nested")
@@ -473,7 +473,7 @@ setMethod("aggregate_cells", "SingleCellExperiment",  function(.data, .sample = 
 												Reduce(function(...) full_join(..., by=c("transcript")), .)
 											
 		)) %>%
-		left_join(.data %>% tidySingleCellExperiment::as_tibble() %>% nanny::subset(!!.sample), by = quo_names(.sample)) %>%
+		left_join(.data %>% tidySingleCellExperiment::as_tibble() %>% subset(!!.sample), by = quo_names(.sample)) %>%
 		tidySingleCellExperiment::unnest(data) %>%
 		
 		drop_class("tidySingleCellExperiment_nested")
