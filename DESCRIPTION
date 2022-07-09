@@ -2,7 +2,7 @@ Type: Package
 Package: tidysc
 Title: Friendly tidy wrappers for facilitating transcriptional
     analyses
-Version: 0.1.1
+Version: 0.1.2
 Author: Stefano Mangiola
 Maintainer: Stefano Mangiola <mangiolastefano@gmail.com>
 Description: This is a collection of utility function that allow

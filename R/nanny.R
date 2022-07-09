@@ -1,4 +1,4 @@
-.subset = 		function(.data,	 .column)	{
+subset = 		function(.data,	 .column)	{
 	# Make col names
 	.column = enquo(.column)
 	
