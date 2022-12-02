@@ -304,57 +304,6 @@ setGeneric("aggregate_cells", function(.data,
   standardGeneric("aggregate_cells"))
 
 
-
-
-#' aggregate_cells
-#'
-#'
-#' @inheritParams aggregate_cells
-#' @return A `aggregate_cells` object
-#'
-setMethod("aggregate_cells", "tidysc",  function(.data, # .data is incompatible with `map`
-                                          .sample = NULL, slot = "data", assays = NULL, aggregation_function = Matrix::rowSums) {
-	# # Normalise
-	# .data_ = .data_ %>% scale_abundance()
-  
-	.data_ = .data
-	# Make col names
-  .sample = enquo(.sample)
-  
-  # If not specified grub it from attributes
-  if(quo_is_null(.sample)) .sample = .data %>% attr("parameters") %$% .sample
-  
-  
-  .transcript = .data %>% attr("parameters") %$% .transcript
-  .abundance = .data %>% attr("parameters") %$% .abundance
-  
-
-  # My assays
-  assay_names_of_choice =	.data %>% 	attr("seurat") %>% 	.[[1]] %>% 	`@` (assays) %>% 	names %>% .[1:2] %>% na.omit() %>% tail(1)
-  
-  # Validate data frame
-  .data_ %>%
-    distinct(!!.sample) %>%
-  	drop_class(c("tidysc", "tt")) %>%
-  	
-  	# Extract cunts
-    mutate(data = map(!!.sample, ~ .data_ %>% 
-                        tidysc::filter(!!.sample == .x) %>%
-    										extract_abundance_bulk
-                        
-                      )
-           ) %>%
-  	left_join(.data_ %>% drop_class(c("tidysc", "tt")) %>% subset(!!.sample)) %>%
-  	unnest(data) 
-  	
-  	# %>%
-  	# 
-  	# # Convert to tidybulk
-  	# tidybulk::tidybulk(!!.sample, !!.transcript, !!(quo_name(.abundance) %>% paste(assay_names_of_choice, sep="_")))
-  
-
-})
-
 #' aggregate_cells
 #'
 #'
@@ -385,12 +334,12 @@ setMethod("aggregate_cells", "Seurat",  function(.data, .sample = NULL, slot = "
 					 ~ GetAssayData(.x, slot = slot) %>%
 					 	aggregation_function(na.rm = T) %>%
 					 	tibble::enframe(
-					 		name  = "transcript",
-					 		value = sprintf("abundance_%s", .y)
+					 		name  = "feature",
+					 		value = sprintf("%s", .y)
 					 	) %>%
-					 	mutate(transcript = as.character(transcript)) 
+					 	mutate(feature = as.character(feature)) 
 			) %>%
-			Reduce(function(...) full_join(..., by=c("transcript")), .)
+			Reduce(function(...) full_join(..., by=c("feature")), .)
 			
 		)) %>%
 		left_join(.data %>% tidyseurat::as_tibble() %>% subset(!!.sample)) %>%
@@ -401,38 +350,24 @@ setMethod("aggregate_cells", "Seurat",  function(.data, .sample = NULL, slot = "
 })
 
 #' aggregate_cells
+#' 
+#' @importFrom tidybulk as_SummarizedExperiment
+#' @importFrom tidySingleCellExperiment nest
+#' @importFrom tidySingleCellExperiment mutate
+#' @importFrom tidySingleCellExperiment as_tibble
 #'
 #'
 #' @inheritParams aggregate_cells
 #' @return A `aggregate_cells` object
 #'
-setMethod("aggregate_cells", "SingleCellExperiment",  function(.data, .sample = NULL, slot = "data", aggregation_function = Matrix::rowSums) {
+setMethod("aggregate_cells", "SingleCellExperiment",  function(.data, .sample = NULL, slot = "data", assays = NULL, aggregation_function = Matrix::rowSums) {
 
 	.sample = enquo(.sample)
 	
-	# # New cell names
-	# cn = 
-	# 	.data %>% 
-	# 	unite("cn___", !!.sample, sep="___") %>%
-	# 	pull("cn___")
-	# 
-	# map2(
-	# 		as.list(.data@assays) ,
-	# 		names(.data@assays),
-	# 		~ {
-	# 			print(.y)
-	# 			.x = .x@counts %>% as.matrix()
-	# 			colnames(.x) = cn
-	# 
-	# 			t(.x) %>% 
-	# 				combineByRow(sum) %>% 	
-	# 				t() %>% 
-	# 				as.data.frame() %>%
-	# 				as_tibble(rownames="transcript") %>% 
-	# 				gather(sample___, !!as.symbol(.y)) 
-	# 		}
-	# 	) %>%
-	# 		reduce(left_join, by=c("transcript", "sample___"))
+	# Subset only wanted assays
+	if(!is.null(assays)){
+		.data@assays@data = .data@assays@data[assays]
+	}
 	
 	.data %>%
 		
@@ -447,18 +382,20 @@ setMethod("aggregate_cells", "SingleCellExperiment",  function(.data, .sample = 
 													~  .x %>%
 														aggregation_function(na.rm = T) %>%
 														tibble::enframe(
-															name  = "transcript",
-															value = sprintf("abundance_%s", .y)
+															name  = "feature",
+															value = sprintf("%s", .y)
 														) %>%
-														mutate(transcript = as.character(transcript)) 
+														mutate(feature = as.character(feature)) 
 												) %>%
-												Reduce(function(...) full_join(..., by=c("transcript")), .)
+												Reduce(function(...) full_join(..., by=c("feature")), .)
 											
 		)) %>%
 		left_join(.data %>% tidySingleCellExperiment::as_tibble() %>% subset(!!.sample), by = quo_names(.sample)) %>%
 		tidySingleCellExperiment::unnest(data) %>%
 		
-		drop_class("tidySingleCellExperiment_nested")
+		drop_class("tidySingleCellExperiment_nested") |> 
+
+		as_SummarizedExperiment(.sample = !!.sample, .transcript = feature, .abundance = !!as.symbol(names(.data@assays)))
 	
 })
 
